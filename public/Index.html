@@ -296,7 +296,7 @@
             document.getElementById("audio-loading").style.display = "none";
             document.getElementById("playPauseButton").style.display = "none";
 
-            fetch("https://artefactintelligenceapp.railway.app/fetch-description", {
+            fetch("https://artefactintelligenceapp.up.railway.app/fetch-description", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ artefact, originalDescription, profile, participantId }),
@@ -329,7 +329,7 @@
 
         // ✅ Function to request TTS from server and auto-play when loaded
         function requestTTS(text) {
-            fetch("https://artefactintelligenceapp.railway.app/fetch-tts", {
+            fetch("https://artefactintelligenceapp.up.railway.app/fetch-tts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ text }),
@@ -383,7 +383,7 @@
 
         async function playTTS(text) {
             try {
-                let audioResponse = await fetch("https://artefactintelligenceapp.railway.app/fetch-tts", {
+                let audioResponse = await fetch("https://artefactintelligenceapp.up.railway.app/fetch-tts", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ text }),
