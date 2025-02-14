@@ -12,7 +12,11 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: "https://artefactintelligenceapp.up.railway.app",  // 🔄 Replace with your frontend URL
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 const OPENAI_HEADERS = {
     "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -169,9 +173,6 @@ app.post("/fetch-description", async (req, res) => {
         res.status(500).json({ response: `The adaptation failed. However, here's the original artefact description:\n\n${originalDescription}` });
     }
 });
-
-
-
 
 // API route for fetching TTS audio
 app.post("/fetch-tts", async (req, res) => {
