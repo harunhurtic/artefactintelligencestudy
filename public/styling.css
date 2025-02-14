@@ -1,0 +1,166 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #2a1a5e;
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Top Section: Title & Clear Button */
+.top-container {
+    background: white;
+    color: #2a1a5e;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    max-width: 600px;
+    margin: auto;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Clear All Answers Button */
+#clear-button {
+    background-color: #800101;
+    color: white;
+    padding: 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+    width: 100%;
+    margin-top: 10px;
+}
+
+#clear-button:hover {
+    background-color: #4a2f7a;
+    transform: scale(1.05);
+}
+
+#pleaseAnswerQuestionsText{
+    margin-top: 50px;
+}
+
+/* Section Title (left-aligned) */
+.section-title {
+    text-align: left;
+    max-width: 600px;
+    margin: 30px auto 10px;
+}
+
+/* Question Cards */
+.card {
+    background: white;
+    padding: 15px;
+    margin: 10px auto;
+    border-radius: 8px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    color: #2a1a5e;
+    max-width: 600px;
+    text-align: left;
+}
+
+/* Button Styling */
+.option-button,
+.artefact-button,
+.nav-button,
+.audio-button {
+    display: block;
+    width: 100%;
+    background-color: #5c3d9e;
+    color: white;
+    border: none;
+    padding: 12px;
+    margin: 5px 0;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+}
+
+.option-button:hover,
+.artefact-button:hover,
+.nav-button:hover,
+.audio-button:hover {
+    background-color: #4a2f7a;
+    transform: scale(1.05);
+}
+
+.option-button.selected {
+    background-color: #2980b9;
+}
+
+/* Artefacts Section */
+.artefacts-container {
+    background: white;
+    color: #2a1a5e;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    max-width: 600px;
+    margin: auto;
+    text-align: center;
+    margin-bottom: 20px; /* Adds space between containers */
+}
+
+/* Back Button */
+.back-button {
+    background-color: #5c3d9e;
+    color: white;
+    padding: 10px 15px;
+    font-size: 16px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+}
+
+.back-button:hover {
+    background-color: #4a2f7a;
+    transform: scale(1.05);
+}
+
+/* Back Button in Its Own Card */
+.back-card {
+    background: white;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: auto;
+    margin-bottom: 15px;
+}
+
+/* Artefact Details Page */
+.artefact-details {
+    background: white;
+    color: #2a1a5e;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    max-width: 600px;
+    margin: auto;
+    text-align: center;
+}
+
+/* Audio Container */
+.audio-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+
+/* Loading Animation */
+.loading {
+    font-size: 16px;
+    text-align: center;
+    margin-top: 10px;
+    animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+    0% { opacity: 0.2; }
+    50% { opacity: 1; }
+    100% { opacity: 0.2; }
+}
