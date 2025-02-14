@@ -337,8 +337,6 @@
                 .then(response => response.blob())
                 .then(audioBlob => {
                     let audioURL = URL.createObjectURL(audioBlob);
-
-                    // Stop existing audio
                     if (audio) {
                         audio.pause();
                         audio.currentTime = 0;
@@ -346,32 +344,18 @@
 
                     audio = new Audio(audioURL);
 
-                    // Ensure audio is fully loaded before playing
+                    // ✅ Ensure the button remains hidden until audio is fully ready
+                    document.getElementById("playPauseButton").style.display = "none";
+
                     audio.addEventListener("canplaythrough", () => {
-                        console.log("🔊 TTS Request Successful - Audio is now ready");
-
-                        // ✅ Set the button to "Listen To Narration" at the start
-                        document.getElementById("playPauseButton").innerText = "🔊 Listen To Narration";
-
-                        // ✅ Display the play button when the audio is ready
+                        console.log("🔊 TTS Ready!");
                         document.getElementById("playPauseButton").style.display = "block";
-
-                        // ✅ Automatically play only if required, otherwise keep it paused
-                        if (deliveryPreference === "Auditory") {
-                            audio.play()
-                                .then(() => {
-                                    console.log("✅ Audio started playing");
-                                    document.getElementById("playPauseButton").innerText = "⏸ Pause Narration";
-                                })
-                                .catch(err => console.error("❌ Auto-play blocked:", err));
-                        }
+                        document.getElementById("audio-loading").style.display = "none";
                     });
 
                     document.getElementById("audio-loading").style.display = "none";
 
-                    // ✅ Ensure correct button text after playback ends
                     audio.onended = () => {
-                        console.log("🔇 TTS Playback Ended");
                         document.getElementById("playPauseButton").innerText = "🔊 Listen To Narration";
                     };
                 })
@@ -379,6 +363,7 @@
                     console.error("❌ Error playing TTS:", error);
                     document.getElementById("audio-loading").style.display = "none";
                 });
+
         }
 
         async function playTTS(text) {
@@ -431,6 +416,7 @@
                 document.getElementById("playPauseButton").innerText = "▶️ Continue Narration";
             }
         }
+
 
         function renderPreferences() {
             document.getElementById("quiz-container").innerHTML = `
