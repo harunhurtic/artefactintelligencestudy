@@ -282,8 +282,19 @@
         </div>
     `;
 
+            // Forcefully display the play button after a slight delay
+            setTimeout(() => {
+                const btn = document.getElementById("playPauseButton");
+                if (btn) {
+                    btn.style.display = "block";
+                    btn.style.opacity = "1";
+                    btn.style.visibility = "visible";
+                }
+            }, 500);
+
             fetchOpenAITTS(artefact, profile);
         }
+
 
         function fetchOpenAITTS(artefact, profile) {
             let originalDescription = artefactDescriptions[artefact] || "No description available.";
