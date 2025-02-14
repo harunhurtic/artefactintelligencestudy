@@ -37,7 +37,7 @@ body {
     transform: scale(1.05);
 }
 
-#pleaseAnswerQuestionsText{
+#pleaseAnswerQuestionsText {
     margin-top: 50px;
 }
 
@@ -63,13 +63,31 @@ body {
 /* Button Styling */
 .option-button,
 .artefact-button,
-.nav-button,
-.audio-button {
+.nav-button {
     display: block;
     width: 100%;
     background-color: #5c3d9e;
     color: white;
     border: none;
+    padding: 12px;
+    margin: 5px 0;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+}
+
+.audio-button {
+    display: block !important;
+    width: 100%;
+    opacity: 1 !important;
+    background-color: #5c3d9e;
+    color: white;
+    border: none;
+    visibility: visible !important;
+    position: relative;
+    z-index: 1000;
+    max-width: 300px;
     padding: 12px;
     margin: 5px 0;
     border-radius: 5px;
@@ -100,7 +118,8 @@ body {
     max-width: 600px;
     margin: auto;
     text-align: center;
-    margin-bottom: 20px; /* Adds space between containers */
+    margin-bottom: 20px;
+    /* Adds space between containers */
 }
 
 /* Back Button */
@@ -160,7 +179,15 @@ body {
 }
 
 @keyframes spin {
-    0% { opacity: 0.2; }
-    50% { opacity: 1; }
-    100% { opacity: 0.2; }
+    0% {
+        opacity: 0.2;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.2;
+    }
 }
