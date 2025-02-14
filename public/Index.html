@@ -383,7 +383,7 @@
 
         async function playTTS(text) {
             try {
-                let audioResponse = await fetch("http://localhost:8000/fetch-tts", {
+                let audioResponse = await fetch("https://artefactintelligenceapp.railway.app/fetch-tts", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ text }),
