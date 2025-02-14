@@ -63,31 +63,13 @@ body {
 /* Button Styling */
 .option-button,
 .artefact-button,
-.nav-button {
+.nav-button,
+.audio-button {
     display: block;
     width: 100%;
     background-color: #5c3d9e;
     color: white;
     border: none;
-    padding: 12px;
-    margin: 5px 0;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 0.3s ease-in-out;
-}
-
-.audio-button {
-    display: block !important;
-    width: 100%;
-    opacity: 1 !important;
-    background-color: #5c3d9e;
-    color: white;
-    border: none;
-    visibility: visible !important;
-    position: relative;
-    z-index: 1000;
-    max-width: 300px;
     padding: 12px;
     margin: 5px 0;
     border-radius: 5px;
