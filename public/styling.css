@@ -65,7 +65,7 @@ body {
 .artefact-button,
 .nav-button,
 .audio-button {
-    display: block !important;
+    display: block;
     width: 100%;
     background-color: #5c3d9e;
     color: white;
