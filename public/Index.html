@@ -283,20 +283,20 @@
             }
 
             document.getElementById("quiz-container").innerHTML = `
-        <div class="artefacts-container">
-            <button onclick="showArtefacts('${profile}')" class="back-button">⬅️ Back to Artefacts</button>
-        </div>
+    <div class="artefacts-container">
+        <button onclick="showArtefacts('${profile}')" class="back-button">⬅️ Back to Artefacts</button>
+    </div>
 
-        <div class="artefacts-container">
-            <h2>${artefact}</h2>
-            <p id="loading" class="loading">🔄 Adapting description...</p>
-            <p id="artefact-description"></p>
-            <p id="audio-loading" class="loading" style="display: none;">🔊 The narrator is getting ready...</p>
-            <div class="audio-container">
-                <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
-                <button id="moreInfoButton" onclick="requestMoreInfo('${artefact}', '${profile}')" class="audio-button" style="display: none;">📜 Tell Me More...</button>
-            </div>
+    <div class="artefacts-container">
+        <h2>${artefact}</h2>
+        <p id="loading" class="loading">🔄 Adapting description...</p>
+        <p id="artefact-description"></p>
+        <p id="audio-loading" class="loading" style="display: none;">🔊 The narrator is getting ready...</p>
+        <div class="audio-container">
+            <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
+            <button id="moreInfoButton" onclick="requestMoreInfo('${artefact}', '${profile}')" class="audio-button" style="display: none;">📜 Tell Me More...</button>
         </div>
+    </div>
     `;
 
             fetchOpenAITTS(artefact, profile);
@@ -311,7 +311,7 @@
             document.getElementById("artefact-description").innerText = "";
             document.getElementById("audio-loading").style.display = "none";
             document.getElementById("playPauseButton").style.display = "none";
-            document.getElementById("moreInfoButton").style.display = "none";  // ✅ Hide initially
+            document.getElementById("moreInfoButton").style.display = "none";
 
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-description", {
                 method: "POST",
@@ -330,23 +330,19 @@
                         document.getElementById("artefact-description").innerText = data.response;
                     }
 
-                    // ✅ If user prefers audio, generate narration
                     if (deliveryPreference === "Auditory") {
-                        document.getElementById("audio-loading").style.display = "block";  // Show narrator loading
-                        requestTTS(data.response, true); // ✅ Pass 'true' to indicate initial adaptation TTS
+                        document.getElementById("audio-loading").style.display = "block";
+                        requestTTS(data.response, true);
                     } else {
-                        document.getElementById("moreInfoButton").style.display = "block"; // ✅ Show Tell Me More if not auditory
+                        document.getElementById("moreInfoButton").style.display = "block";
                     }
                 })
                 .catch(error => {
                     console.error("❌ Error fetching description:", error);
                     document.getElementById("loading").style.display = "none";
-                    document.getElementById("artefact-description").innerText =
-                        `The adaptation failed. However, here's the original artefact description:\n\n${originalDescription}`;
-
-                    document.getElementById("moreInfoButton").style.display = "block"; // ✅ Ensure Tell Me More is shown
                 });
         }
+
 
         function requestMoreInfo(artefact, profile) {
             if (!artefact || !profile || !participantId) {
@@ -390,6 +386,7 @@
                     document.getElementById("moreInfoButton").style.display = "block";
                 });
         }
+
 
 
 
@@ -473,8 +470,6 @@
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
-
-
 
 
         async function playTTS(text) {
