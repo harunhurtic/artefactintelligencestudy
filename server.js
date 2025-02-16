@@ -273,6 +273,9 @@ app.post("/fetch-more-info", async (req, res) => {
     }
 });
 
+
+
+
 // API route for fetching TTS audio
 app.post("/fetch-tts", async (req, res) => {
     const { text } = req.body;
@@ -365,4 +368,3 @@ console.log("🤖 Assistant ID:", process.env.ASSISTANT_ID ? "Loaded" : "MISSING
 // ✅ Start server
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
-
