@@ -353,6 +353,8 @@
                 .then(response => response.blob())
                 .then(audioBlob => {
                     let audioURL = URL.createObjectURL(audioBlob);
+
+                    // Stop any existing audio before setting up new one
                     if (audio) {
                         audio.pause();
                         audio.currentTime = 0;
@@ -360,27 +362,54 @@
 
                     audio = new Audio(audioURL);
 
-                    // ✅ Ensure the button remains hidden until audio is fully ready
-                    document.getElementById("playPauseButton").style.display = "none";
+                    // Ensure button is hidden initially
+                    let playButton = document.getElementById("playPauseButton");
+                    let loadingIndicator = document.getElementById("audio-loading");
 
+                    playButton.style.display = "none";
+                    loadingIndicator.style.display = "block"; // Show loading text
+
+                    // ✅ Standard event: Show button when audio is fully loaded
                     audio.addEventListener("canplaythrough", () => {
-                        console.log("🔊 TTS Ready!");
-                        document.getElementById("playPauseButton").style.display = "block";
-                        document.getElementById("audio-loading").style.display = "none";
+                        console.log("🔊 TTS Ready! Showing button.");
+                        playButton.style.display = "block"; // Show play button
+                        loadingIndicator.style.display = "none"; // Hide loading indicator
                     });
 
-                    document.getElementById("audio-loading").style.display = "none";
+                    // ✅ Mobile Fix: Ensure button appears even if event never fires
+                    setTimeout(() => {
+                        if (audio.readyState >= 2) { // Check if audio is ready
+                            console.log("📢 Mobile backup: Showing play button after delay.");
+                            playButton.style.display = "block";
+                            loadingIndicator.style.display = "none";
+                        }
+                    }, 3000); // Wait 3 seconds as a fallback
 
+                    // ✅ Ensure button interaction works on mobile
+                    playButton.addEventListener("click", () => {
+                        if (!audio) return;
+
+                        audio.play().then(() => {
+                            console.log("✅ Audio started on user interaction.");
+                            playButton.innerText = "⏸ Pause Narration";
+                        }).catch(err => {
+                            console.warn("⚠️ Audio play blocked, user interaction required.", err);
+                        });
+                    });
+
+                    // ✅ Reset button text after audio finishes
                     audio.onended = () => {
-                        document.getElementById("playPauseButton").innerText = "🔊 Listen To Narration";
+                        console.log("🔇 TTS Playback Ended");
+                        playButton.innerText = "🔊 Listen To Narration";
                     };
+
                 })
                 .catch(error => {
-                    console.error("❌ Error playing TTS:", error);
+                    console.error("❌ Error fetching TTS:", error);
                     document.getElementById("audio-loading").style.display = "none";
                 });
-
         }
+
 
         async function playTTS(text) {
             try {
