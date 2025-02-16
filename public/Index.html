@@ -305,14 +305,11 @@
             fetchOpenAITTS(artefact, profile);
         }
 
-
-
         function fetchOpenAITTS(artefact, profile) {
             let originalDescription = artefactDescriptions[artefact] || "No description available.";
 
-            let prompt = `Adapt the following artefact description for a visitor with the ${profile}: \n**Artefact:${artefact}\n** Description:${originalDescription}`;
+            let prompt = `Adapt the following artefact description for a ${profile} visitor:\n\n**Participant ID:** ${participantId}\n**Artefact:** ${artefact}\n**Original Description:** ${originalDescription}`;
 
-            document.getElementById("loading").classList.add("loading");
             document.getElementById("loading").style.display = "block";
             document.getElementById("artefact-description").innerText = "";
             document.getElementById("audio-loading").style.display = "none";
@@ -336,10 +333,10 @@
                         document.getElementById("artefact-description").innerText = data.response;
                     }
 
-                    // ✅ Always Show "Tell Me More" After Text is Loaded (No Matter the Preference)
+                    // ✅ Always show "Tell Me More" after text is generated
                     document.getElementById("moreInfoButton").style.display = "block";
 
-                    // ✅ Only start TTS if Auditory mode is selected
+                    // ✅ If user prefers audio, generate narration
                     if (deliveryPreference === "Auditory") {
                         document.getElementById("audio-loading").style.display = "block";
                         requestTTS(data.response);
@@ -351,12 +348,18 @@
                     document.getElementById("artefact-description").innerText =
                         `The adaptation failed. However, here's the original artefact description:\n\n${originalDescription}`;
 
-                    // ✅ Show "Tell Me More" Even if There's an Error
+                    // ✅ Show "Tell Me More" even if request fails
                     document.getElementById("moreInfoButton").style.display = "block";
                 });
         }
 
+
         function requestMoreInfo(artefact, profile) {
+            if (!artefact || !profile || !participantId) {
+                console.error("❌ Missing required fields: artefact, profile, or participantId");
+                return;
+            }
+
             if (audio) {
                 audio.pause();
                 audio.currentTime = 0;
@@ -365,9 +368,10 @@
 
             document.getElementById("playPauseButton").style.display = "none";
             document.getElementById("audio-loading").style.display = "block";
+            document.getElementById("moreInfoButton").style.display = "none"; // ✅ Hide button while loading
             document.getElementById("artefact-description").innerText = "🔄 Fetching more details...";
 
-            let prompt = `The ${profile} visitor wants to learn more about the "${artefact}" artefact. Provide additional information.`;
+            let prompt = `The visitor wants to learn more about the artefact "${artefact}" for a ${profile} visitor. Provide additional historical or cultural insights.`;
 
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-description", {
                 method: "POST",
@@ -376,25 +380,30 @@
             })
                 .then(response => response.json())
                 .then(data => {
+                    document.getElementById("audio-loading").style.display = "none";
+
                     if (data.response && !data.response.includes("No additional information")) {
                         document.getElementById("artefact-description").innerText = data.response;
 
+                        // ✅ Keep "Tell Me More" button visible for further interaction
+                        document.getElementById("moreInfoButton").style.display = "block";
+
                         if (deliveryPreference === "Auditory") {
                             requestTTS(data.response);
-                        } else {
-                            document.getElementById("audio-loading").style.display = "none";
                         }
                     } else {
                         document.getElementById("artefact-description").innerText = "No additional information is available at this time.";
-                        document.getElementById("audio-loading").style.display = "none";
+                        document.getElementById("moreInfoButton").style.display = "block";
                     }
                 })
                 .catch(error => {
                     console.error("❌ Error fetching more details:", error);
                     document.getElementById("artefact-description").innerText = "Failed to fetch additional information.";
+                    document.getElementById("moreInfoButton").style.display = "block";
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
+
 
 
         // ✅ Function to request TTS from server and buttons when loaded
@@ -416,16 +425,14 @@
                     audio = new Audio(audioURL);
 
                     let playButton = document.getElementById("playPauseButton");
-                    let moreInfoButton = document.getElementById("moreInfoButton");
                     let loadingIndicator = document.getElementById("audio-loading");
 
                     playButton.style.display = "none";
-                    moreInfoButton.style.display = "none";
                     loadingIndicator.style.display = "block";
 
                     audio.addEventListener("canplaythrough", () => {
-                        playButton.style.display = "block"; // Show play button when audio is ready
-                        loadingIndicator.style.display = "none"; // Hide loading
+                        playButton.style.display = "block";
+                        loadingIndicator.style.display = "none";
                     });
 
                     let checkAudioReady = setInterval(() => {
@@ -446,7 +453,7 @@
 
                     audio.onended = () => {
                         playButton.innerText = "🔊 Listen To Narration";
-                        moreInfoButton.style.display = "block"; // Show "Tell Me More" only after narration has played
+                        document.getElementById("moreInfoButton").style.display = "block";  // ✅ Always keep "Tell Me More" visible
                     };
 
                 })
@@ -455,6 +462,7 @@
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
+
 
 
         async function playTTS(text) {
