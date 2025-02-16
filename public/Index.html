@@ -193,10 +193,17 @@
 
 
         function checkCompletion() {
+            let nextButtonCard = document.getElementById("nextButtonCard");
+
             if (Object.keys(userResponses).length === questions.length) {
                 assignProfile();
+            } else {
+                if (nextButtonCard) {
+                    nextButtonCard.remove(); // Hide "Next" button if all answers aren't selected
+                }
             }
         }
+
 
         function assignProfile() {
             let scores = { "Explorer": 0, "Facilitator": 0, "Professional/Hobbyist": 0, "Experience Seeker": 0, "Recharger": 0 };
@@ -210,26 +217,25 @@
             let assignedProfile = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
             let deliveryMode = deliveryPreference === "Auditory" ? "Auditory" : "Text-Based";
 
-            // ✅ Hide the old result display
             document.getElementById("result").innerHTML = "";
 
-            // ✅ Ensure the "Next" button doesn't appear multiple times
-            if (!document.getElementById("nextButtonCard")) {
-                let nextButtonCard = document.createElement("div");
+            let nextButtonCard = document.getElementById("nextButtonCard");
+
+            if (!nextButtonCard) {
+                nextButtonCard = document.createElement("div");
                 nextButtonCard.id = "nextButtonCard";
                 nextButtonCard.className = "card";
                 nextButtonCard.innerHTML = `
-            <p>Your Profile: <b>${assignedProfile}</b>. Delivery: ${deliveryMode}</p>
+            <p>Thanks for your answers. The experience will now be personalized for you.</p>
             <button id="nextButton" class="nav-button">Next</button>
         `;
 
-                // ✅ Append the button to the quiz container
                 document.getElementById("quiz").appendChild(nextButtonCard);
 
-                // ✅ Add event listener for the Next button
                 document.getElementById("nextButton").addEventListener("click", () => showArtefacts(assignedProfile));
             }
         }
+
 
 
         function clearSelections() {
@@ -290,14 +296,15 @@
             <p id="artefact-description"></p>
             <p id="audio-loading" class="loading" style="display: none;">🔊 The narrator is getting ready...</p>
             <div class="audio-container">
-                <button id="moreInfoButton" onclick="requestMoreInfo('${artefact}', '${profile}')" class="audio-button">📜 Tell Me More...</button>
                 <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
+                <button id="moreInfoButton" onclick="requestMoreInfo('${artefact}', '${profile}')" class="audio-button" style="display: none;">📜 Tell Me More...</button>
             </div>
         </div>
     `;
 
             fetchOpenAITTS(artefact, profile);
         }
+
 
 
         function fetchOpenAITTS(artefact, profile) {
@@ -352,7 +359,7 @@
             document.getElementById("audio-loading").style.display = "block";
             document.getElementById("artefact-description").innerText = "🔄 Fetching more details...";
 
-            let prompt = `Tell me more details about the artefact "${artefact}" for a ${profile} visitor.`;
+            let prompt = `The visitor wants to learn more about the artefact "${artefact}" for a ${profile} visitor. Provide additional historical or cultural insights.`;
 
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-description", {
                 method: "POST",
@@ -361,11 +368,16 @@
             })
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById("artefact-description").innerText = data.response || "No additional information available.";
+                    if (data.response && !data.response.includes("No additional information")) {
+                        document.getElementById("artefact-description").innerText = data.response;
 
-                    if (deliveryPreference === "Auditory") {
-                        requestTTS(data.response);
+                        if (deliveryPreference === "Auditory") {
+                            requestTTS(data.response);
+                        } else {
+                            document.getElementById("audio-loading").style.display = "none";
+                        }
                     } else {
+                        document.getElementById("artefact-description").innerText = "No additional information is available at this time.";
                         document.getElementById("audio-loading").style.display = "none";
                     }
                 })
@@ -375,6 +387,7 @@
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
+
 
         // ✅ Function to request TTS from server and buttons when loaded
         function requestTTS(text) {
@@ -387,7 +400,6 @@
                 .then(audioBlob => {
                     let audioURL = URL.createObjectURL(audioBlob);
 
-                    // Stop any existing audio before setting up new one
                     if (audio) {
                         audio.pause();
                         audio.currentTime = 0;
@@ -396,46 +408,37 @@
                     audio = new Audio(audioURL);
 
                     let playButton = document.getElementById("playPauseButton");
+                    let moreInfoButton = document.getElementById("moreInfoButton");
                     let loadingIndicator = document.getElementById("audio-loading");
 
-                    // Ensure button starts hidden, loading starts visible
                     playButton.style.display = "none";
+                    moreInfoButton.style.display = "none";
                     loadingIndicator.style.display = "block";
 
-                    console.log("🔊 TTS audio generated. Waiting for it to be ready...");
-
-                    // ✅ Primary event: Show button when audio is fully loaded
                     audio.addEventListener("canplaythrough", () => {
-                        console.log("✅ TTS Ready! Showing play button.");
-                        playButton.style.display = "block"; // Show play button
-                        loadingIndicator.style.display = "none"; // Hide loading indicator
+                        playButton.style.display = "block"; // Show play button when audio is ready
+                        loadingIndicator.style.display = "none"; // Hide loading
                     });
 
-                    // ✅ Mobile Fix: Polling for readyState change (backup method)
                     let checkAudioReady = setInterval(() => {
-                        if (audio.readyState >= 2) {  // Ensure audio is at least "loaded"
-                            console.log("📢 Mobile Fallback: Audio readyState confirmed, showing button.");
+                        if (audio.readyState >= 2) {
                             playButton.style.display = "block";
                             loadingIndicator.style.display = "none";
                             clearInterval(checkAudioReady);
                         }
-                    }, 1000); // Check every second
+                    }, 1000);
 
-                    // ✅ Final failsafe: Force button to appear after 5 seconds
                     setTimeout(() => {
-                        console.log("⚠️ Final Failsafe: Forcing play button to appear after 5s.");
                         playButton.style.display = "block";
                         loadingIndicator.style.display = "none";
                         clearInterval(checkAudioReady);
                     }, 5000);
 
-                    // ✅ Ensure Play/Pause works correctly on both Desktop & Mobile
                     playButton.onclick = () => toggleAudio();
 
-                    // ✅ Ensure button text resets when playback ends
                     audio.onended = () => {
-                        console.log("🔇 TTS Playback Ended");
                         playButton.innerText = "🔊 Listen To Narration";
+                        moreInfoButton.style.display = "block"; // Show "Tell Me More" only after narration has played
                     };
 
                 })
@@ -444,6 +447,7 @@
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
+
 
         async function playTTS(text) {
             try {
