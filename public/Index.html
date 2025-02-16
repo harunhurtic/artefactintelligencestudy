@@ -208,14 +208,29 @@
             });
 
             let assignedProfile = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
-
-            // ✅ Ensure delivery preference is set correctly
             let deliveryMode = deliveryPreference === "Auditory" ? "Auditory" : "Text-Based";
 
-            document.getElementById("result").innerHTML = `Your Profile: <b>${assignedProfile}</b> (Delivery: ${deliveryMode})`;
+            // ✅ Hide the old result display
+            document.getElementById("result").innerHTML = "";
 
-            setTimeout(() => showArtefacts(assignedProfile), 2000);
+            // ✅ Ensure the "Next" button doesn't appear multiple times
+            if (!document.getElementById("nextButtonCard")) {
+                let nextButtonCard = document.createElement("div");
+                nextButtonCard.id = "nextButtonCard";
+                nextButtonCard.className = "card";
+                nextButtonCard.innerHTML = `
+            <p>Your Profile: <b>${assignedProfile}</b>. Delivery: ${deliveryMode}</p>
+            <button id="nextButton" class="nav-button">Next</button>
+        `;
+
+                // ✅ Append the button to the quiz container
+                document.getElementById("quiz").appendChild(nextButtonCard);
+
+                // ✅ Add event listener for the Next button
+                document.getElementById("nextButton").addEventListener("click", () => showArtefacts(assignedProfile));
+            }
         }
+
 
         function clearSelections() {
             userResponses = {}; // Clear all stored responses
@@ -265,18 +280,17 @@
             }
 
             document.getElementById("quiz-container").innerHTML = `
-        <!-- Back Button placed outside the main container -->
         <div class="artefacts-container">
             <button onclick="showArtefacts('${profile}')" class="back-button">⬅️ Back to Artefacts</button>
         </div>
 
-        <!-- The artefact content stays inside the container -->
         <div class="artefacts-container">
             <h2>${artefact}</h2>
             <p id="loading" class="loading">🔄 Adapting description...</p>
             <p id="artefact-description"></p>
             <p id="audio-loading" class="loading" style="display: none;">🔊 The narrator is getting ready...</p>
             <div class="audio-container">
+                <button id="moreInfoButton" onclick="requestMoreInfo('${artefact}', '${profile}')" class="audio-button">📜 Tell Me More...</button>
                 <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
             </div>
         </div>
@@ -284,6 +298,7 @@
 
             fetchOpenAITTS(artefact, profile);
         }
+
 
         function fetchOpenAITTS(artefact, profile) {
             let originalDescription = artefactDescriptions[artefact] || "No description available.";
@@ -326,8 +341,42 @@
                 });
         }
 
+        function requestMoreInfo(artefact, profile) {
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+                audio = null;
+            }
 
-        // ✅ Function to request TTS from server and auto-play when loaded
+            document.getElementById("playPauseButton").style.display = "none";
+            document.getElementById("audio-loading").style.display = "block";
+            document.getElementById("artefact-description").innerText = "🔄 Fetching more details...";
+
+            let prompt = `Tell me more details about the artefact "${artefact}" for a ${profile} visitor.`;
+
+            fetch("https://artefactintelligenceapp.up.railway.app/fetch-description", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ artefact, profile, participantId, followUp: true }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("artefact-description").innerText = data.response || "No additional information available.";
+
+                    if (deliveryPreference === "Auditory") {
+                        requestTTS(data.response);
+                    } else {
+                        document.getElementById("audio-loading").style.display = "none";
+                    }
+                })
+                .catch(error => {
+                    console.error("❌ Error fetching more details:", error);
+                    document.getElementById("artefact-description").innerText = "Failed to fetch additional information.";
+                    document.getElementById("audio-loading").style.display = "none";
+                });
+        }
+
+        // ✅ Function to request TTS from server and buttons when loaded
         function requestTTS(text) {
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-tts", {
                 method: "POST",
@@ -362,7 +411,7 @@
                         loadingIndicator.style.display = "none"; // Hide loading indicator
                     });
 
-                    // ✅ Backup Method: Polling for readyState change
+                    // ✅ Mobile Fix: Polling for readyState change (backup method)
                     let checkAudioReady = setInterval(() => {
                         if (audio.readyState >= 2) {  // Ensure audio is at least "loaded"
                             console.log("📢 Mobile Fallback: Audio readyState confirmed, showing button.");
@@ -395,8 +444,6 @@
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
-
-
 
         async function playTTS(text) {
             try {
