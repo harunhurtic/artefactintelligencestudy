@@ -190,6 +190,7 @@ app.post("/fetch-description", async (req, res) => {
 });
 
 
+
 // API route for fetching additional artefact details (for "Tell Me More" button)
 app.post("/fetch-more-info", async (req, res) => {
     console.log("🛠️ Received fetch-more-info request:", req.body);
@@ -272,6 +273,7 @@ app.post("/fetch-more-info", async (req, res) => {
         res.status(500).json({ response: "Failed to fetch additional information." });
     }
 });
+
 
 
 
