@@ -192,7 +192,6 @@
             checkCompletion();
         }
 
-
         function checkCompletion() {
             let nextButtonCard = document.getElementById("nextButtonCard");
 
@@ -204,7 +203,6 @@
                 }
             }
         }
-
 
         function assignProfile() {
             let scores = { "Explorer": 0, "Facilitator": 0, "Professional/Hobbyist": 0, "Experience Seeker": 0, "Recharger": 0 };
@@ -236,8 +234,6 @@
                 document.getElementById("nextButton").addEventListener("click", () => showArtefacts(assignedProfile));
             }
         }
-
-
 
         function clearSelections() {
             userResponses = {}; // Clear all stored responses
@@ -368,11 +364,6 @@
             }
 
             document.getElementById("playPauseButton").style.display = "none";
-
-            if (deliveryPreference === "Auditory") {
-                document.getElementById("audio-loading").style.display = "block";
-            }
-
             document.getElementById("moreInfoButton").style.display = "none"; // ✅ Hide button while loading
             document.getElementById("artefact-description").innerHTML = `<span class="loading">🔄 Getting more details...</span>`;
 
@@ -383,31 +374,24 @@
             })
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById("audio-loading").style.display = "none";
+                    // ✅ Hide the loading text
+                    document.getElementById("artefact-description").innerText = data.response;
 
-                    if (data.response && !data.response.includes("No additional information")) {
-                        document.getElementById("artefact-description").innerText = data.response;
+                    // ✅ Show "Tell Me More" button again
+                    document.getElementById("moreInfoButton").style.display = "block";
 
-                        // ✅ Keep "Tell Me More" button visible for further interaction
-                        document.getElementById("moreInfoButton").style.display = "block";
-
-                        if (deliveryPreference === "Auditory") {
-                            requestTTS(data.response);
-                        }
-                    } else {
-                        document.getElementById("artefact-description").innerText = "No additional information is available at this time.";
-                        document.getElementById("moreInfoButton").style.display = "block";
+                    // ✅ If Auditory mode is selected, start TTS **AFTER** the text is displayed
+                    if (deliveryPreference === "Auditory") {
+                        document.getElementById("audio-loading").style.display = "block";
+                        requestTTS(data.response);
                     }
                 })
                 .catch(error => {
                     console.error("❌ Error fetching more details:", error);
                     document.getElementById("artefact-description").innerText = "Failed to fetch additional information.";
-                    document.getElementById("moreInfoButton").style.display = "block";
-                    document.getElementById("audio-loading").style.display = "none";
+                    document.getElementById("moreInfoButton").style.display = "block"; // Show button again
                 });
         }
-
-
 
         // ✅ Function to request TTS from server and buttons when loaded
         function requestTTS(text) {
@@ -465,8 +449,6 @@
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
-
-
 
         async function playTTS(text) {
             try {
