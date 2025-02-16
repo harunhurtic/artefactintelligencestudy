@@ -70,7 +70,6 @@ app.get("/", (req, res) => {
 });
 
 // API route for fetching adapted descriptions with failure detection
-// API route for fetching adapted descriptions with failure detection
 app.post("/fetch-description", async (req, res) => {
     console.log("🛠️ Received fetch-description request:", req.body); // ✅ Debugging log
 
@@ -204,6 +203,109 @@ app.post("/fetch-description", async (req, res) => {
         res.status(500).json({ response: `The adaptation failed. However, here's the original artefact description:\n\n${originalDescription}` });
     }
 });
+
+// API route for fetching additional artefact details (for "Tell Me More" button)
+app.post("/fetch-more-info", async (req, res) => {
+    console.log("🛠️ Received fetch-more-info request:", req.body); // ✅ Debugging log
+
+    const { artefact, profile, participantId } = req.body;
+
+    if (!artefact || !profile || !participantId) {
+        console.error("❌ Missing required fields: artefact, profile, or participantId");
+        return res.status(400).json({ error: "Missing artefact, profile, or participantId" });
+    }
+
+    let prompt = `The visitor wants to learn more about the artefact "${artefact}" for a "${profile}" visitor. Provide additional historical or cultural insights.`;
+
+    try {
+        console.log("🟢 Creating additional info thread...");
+
+        const threadResponse = await fetch("https://api.openai.com/v1/threads", {
+            method: "POST",
+            headers: OPENAI_HEADERS,
+            body: JSON.stringify({ metadata: { participantId } }),
+            timeout: 60000,
+        });
+
+        const threadData = await threadResponse.json();
+        if (!threadData.id) throw new Error("Failed to create thread");
+
+        const threadId = threadData.id;
+        console.log(`✅ Created Thread ID: ${threadId} (Participant: ${participantId})`);
+
+        console.log(`📝 Sending additional prompt to Assistant:\n${prompt}`);
+        const messageResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
+            method: "POST",
+            headers: OPENAI_HEADERS,
+            body: JSON.stringify({ role: "user", content: prompt }),
+            timeout: 60000,
+        });
+
+        const messageData = await messageResponse.json();
+        if (!messageData.id) throw new Error("Failed to add message");
+
+        console.log("▶️ Running Assistant for additional info...");
+        const runResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs`, {
+            method: "POST",
+            headers: OPENAI_HEADERS,
+            body: JSON.stringify({ assistant_id: process.env.ASSISTANT_ID }),
+            timeout: 60000,
+        });
+
+        const runData = await runResponse.json();
+        if (!runData.id) throw new Error("Failed to run assistant");
+
+        const runId = runData.id;
+        console.log(`✅ Additional Info Run ID: ${runId}, Participant ID: ${participantId}`);
+
+        let status = "in_progress";
+        let responseContent = "";
+
+        while (status === "in_progress" || status === "queued") {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const checkRunResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs/${runId}`, {
+                headers: OPENAI_HEADERS,
+            });
+
+            const checkRunData = await checkRunResponse.json();
+            status = checkRunData.status;
+            console.log("⏳ Additional Info Status:", status);
+
+            if (status === "failed") {
+                console.error("❌ Assistant Run Failed:", checkRunData);
+                break;
+            }
+
+            if (status === "completed") {
+                console.log("📩 Fetching Assistant's Additional Info Response...");
+                const messagesResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
+                    headers: OPENAI_HEADERS,
+                });
+
+                const messagesData = await messagesResponse.json();
+                const assistantMessage = messagesData.data.find(msg => msg.role === "assistant");
+
+                if (assistantMessage && assistantMessage.content && assistantMessage.content[0].text) {
+                    responseContent = assistantMessage.content[0].text.value;
+                    console.log(`🟢 Assistant additional info received for Participant ${participantId}:`, responseContent);
+                }
+                break;
+            }
+        }
+
+        if (!responseContent) {
+            responseContent = `No additional information is available for this artefact at this time.`;
+        }
+
+        res.json({ response: responseContent });
+
+    } catch (error) {
+        console.error("❌ Error fetching additional info:", error);
+        res.status(500).json({ response: "Failed to fetch additional information." });
+    }
+});
+
 
 
 // API route for fetching TTS audio
