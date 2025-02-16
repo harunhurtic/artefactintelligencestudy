@@ -70,7 +70,10 @@ app.get("/", (req, res) => {
 });
 
 // API route for fetching adapted descriptions with failure detection
+// API route for fetching adapted descriptions with failure detection
 app.post("/fetch-description", async (req, res) => {
+    console.log("🛠️ Received fetch-description request:", req.body); // ✅ Debugging log
+
     const { artefact, originalDescription, profile, participantId } = req.body;
 
     if (!artefact || !originalDescription || !profile || !participantId) {
@@ -201,6 +204,7 @@ app.post("/fetch-description", async (req, res) => {
         res.status(500).json({ response: `The adaptation failed. However, here's the original artefact description:\n\n${originalDescription}` });
     }
 });
+
 
 // API route for fetching TTS audio
 app.post("/fetch-tts", async (req, res) => {
