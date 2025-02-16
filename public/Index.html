@@ -118,9 +118,10 @@
                 return;
             }
 
-            console.log(`✅ Participant ID set: ${participantId}`);
+            console.log(`✅ Participant ID set: ${participantId}`); // Log the ID for debugging
             renderQuiz();  // Proceed to the quiz
         }
+
 
         function renderQuiz() {
             let quizContainer = document.getElementById("quiz-container");
@@ -355,8 +356,14 @@
 
 
         function requestMoreInfo(artefact, profile) {
+            console.log("🟢 Requesting More Info for:");
+            console.log("Artefact:", artefact);
+            console.log("Profile:", profile);
+            console.log("Participant ID:", participantId);
+
             if (!artefact || !profile || !participantId) {
                 console.error("❌ Missing required fields: artefact, profile, or participantId");
+                alert("Error: Missing required fields for request.");
                 return;
             }
 
@@ -368,25 +375,34 @@
 
             document.getElementById("playPauseButton").style.display = "none";
             document.getElementById("audio-loading").style.display = "block";
-            document.getElementById("moreInfoButton").style.display = "none"; // ✅ Hide button while loading
+            document.getElementById("moreInfoButton").style.display = "none"; // Hide button while loading
             document.getElementById("artefact-description").innerText = "🔄 Fetching more details...";
 
-            let prompt = `The visitor wants to learn more about the artefact "${artefact}" for a ${profile} visitor. Provide additional historical or cultural insights.`;
+            let requestBody = {
+                artefact: artefact,
+                profile: profile,
+                participantId: participantId,
+                followUp: true
+            };
+
+            console.log("📝 Sending Request Body:", requestBody);
 
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-description", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ artefact, profile, participantId, followUp: true }),
+                body: JSON.stringify(requestBody),
             })
-                .then(response => response.json())
+                .then(response => {
+                    console.log("🔵 Server Response Status:", response.status);
+                    return response.json();
+                })
                 .then(data => {
+                    console.log("🔵 Response Data:", data);
                     document.getElementById("audio-loading").style.display = "none";
 
                     if (data.response && !data.response.includes("No additional information")) {
                         document.getElementById("artefact-description").innerText = data.response;
-
-                        // ✅ Keep "Tell Me More" button visible for further interaction
-                        document.getElementById("moreInfoButton").style.display = "block";
+                        document.getElementById("moreInfoButton").style.display = "block"; // Keep button visible
 
                         if (deliveryPreference === "Auditory") {
                             requestTTS(data.response);
@@ -403,7 +419,6 @@
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
-
 
 
         // ✅ Function to request TTS from server and buttons when loaded
