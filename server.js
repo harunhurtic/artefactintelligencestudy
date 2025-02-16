@@ -25,9 +25,26 @@ const OPENAI_HEADERS = {
 };
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, {})
+mongoose.set("strictQuery", true);
+mongoose.set("bufferCommands", false); // Prevents buffering if disconnected
+
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 30000, // ⏳ Increase timeout to 30 seconds
+    socketTimeoutMS: 45000, // Increase query timeout
+})
     .then(() => console.log("✅ Connected to MongoDB"))
-    .catch(err => console.error("❌ MongoDB Connection Error:", err));
+    .catch(err => {
+        console.error("❌ MongoDB Connection Error:", err);
+        process.exit(1); // 🚨 Exit if database is unavailable
+    });
+
+// Debugging: Listen for connection events
+mongoose.connection.on("connecting", () => console.log("⏳ Connecting to MongoDB..."));
+mongoose.connection.on("connected", () => console.log("✅ MongoDB connected successfully!"));
+mongoose.connection.on("error", err => console.error("❌ MongoDB Error:", err));
+mongoose.connection.on("disconnected", () => console.error("⚠️ MongoDB Disconnected!"));
 
 const threadSchema = new mongoose.Schema({
     threadId: String,
@@ -79,15 +96,26 @@ app.post("/fetch-description", async (req, res) => {
         const threadId = threadData.id;
         console.log(`✅ Created Thread ID: ${threadId} (Participant: ${participantId})`);
 
-        // ✅ Store thread in MongoDB
+        // 🛑 Ensure MongoDB is connected before saving the thread
+        if (mongoose.connection.readyState !== 1) {
+            console.error("❌ MongoDB is not connected. Skipping thread save.");
+            return res.status(500).json({ error: "Database connection lost. Please try again later." });
+        }
+
         const newThread = new Thread({
             threadId,
             participantId,
             createdAt: new Date(),
-            messages: []  // Messages will be stored separately
+            messages: []
         });
 
-        await newThread.save();
+        try {
+            await newThread.save();
+            console.log(`✅ Thread saved in MongoDB (ID: ${threadId})`);
+        } catch (error) {
+            console.error("❌ Error saving thread to MongoDB:", error);
+            return res.status(500).json({ error: "Failed to save thread in database." });
+        }
 
         console.log(`📝 Sending prompt to Assistant:\n${prompt}`);
         const messageResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
@@ -220,14 +248,15 @@ async function fetchTTSWithRetry(text, retries = 3) {
             if (!response.ok) throw new Error(`Failed to generate audio: ${response.statusText}`);
 
             const audioBuffer = await response.arrayBuffer();
-
-            console.log("🔊 Narrator is loaded and ready to play!");  // Success message
-
+            console.log("🔊 TTS Audio successfully generated!");
             return Buffer.from(audioBuffer);
         } catch (error) {
             console.error(`❌ TTS attempt ${i + 1} failed:`, error);
-            if (i === retries - 1) throw error; // If last retry, throw the error
-            await new Promise(res => setTimeout(res, 2000)); // Wait before retrying
+            if (i === retries - 1) {
+                console.error("🚨 TTS service unavailable after multiple retries.");
+                throw error;
+            }
+            await new Promise(res => setTimeout(res, 2000)); // ⏳ Wait before retrying
         }
     }
 }
