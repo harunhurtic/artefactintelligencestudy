@@ -353,23 +353,34 @@
                     playButton.style.display = "none";
                     loadingIndicator.style.display = "block";
 
-                    // ✅ Standard event: Show button when audio is fully loaded
+                    console.log("🔊 TTS audio generated. Waiting for it to be ready...");
+
+                    // ✅ Primary event: Show button when audio is fully loaded
                     audio.addEventListener("canplaythrough", () => {
-                        console.log("🔊 TTS Ready! Showing button.");
+                        console.log("✅ TTS Ready! Showing play button.");
                         playButton.style.display = "block"; // Show play button
                         loadingIndicator.style.display = "none"; // Hide loading indicator
                     });
 
-                    // ✅ Mobile Fix: Ensure button appears even if `canplaythrough` never fires
-                    setTimeout(() => {
-                        if (audio.readyState >= 2) { // Check if audio is ready
-                            console.log("📢 Mobile backup: Showing play button after delay.");
+                    // ✅ Backup Method: Polling for readyState change
+                    let checkAudioReady = setInterval(() => {
+                        if (audio.readyState >= 2) {  // Ensure audio is at least "loaded"
+                            console.log("📢 Mobile Fallback: Audio readyState confirmed, showing button.");
                             playButton.style.display = "block";
                             loadingIndicator.style.display = "none";
+                            clearInterval(checkAudioReady);
                         }
-                    }, 3000); // Wait 3 seconds as a fallback
+                    }, 1000); // Check every second
 
-                    // ✅ Fix: Ensure Play/Pause works correctly on both Desktop & Mobile
+                    // ✅ Final failsafe: Force button to appear after 5 seconds
+                    setTimeout(() => {
+                        console.log("⚠️ Final Failsafe: Forcing play button to appear after 5s.");
+                        playButton.style.display = "block";
+                        loadingIndicator.style.display = "none";
+                        clearInterval(checkAudioReady);
+                    }, 5000);
+
+                    // ✅ Ensure Play/Pause works correctly on both Desktop & Mobile
                     playButton.onclick = () => toggleAudio();
 
                     // ✅ Ensure button text resets when playback ends
@@ -384,6 +395,7 @@
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
+
 
 
         async function playTTS(text) {
