@@ -265,41 +265,25 @@
             }
 
             document.getElementById("quiz-container").innerHTML = `
-    <!-- Back Button placed outside the main container -->
-    <div class="artefacts-container">
-        <button onclick="showArtefacts('${profile}')" class="back-button">⬅️ Back to Artefacts</button>
-    </div>
-
-    <!-- The artefact content stays inside the container -->
-    <div class="artefacts-container">
-        <h2>${artefact}</h2>
-        <p id="loading" class="loading">🔄 Adapting description...</p>
-        <p id="artefact-description"></p>
-        <p id="audio-loading" class="loading" style="display: none;">🔊 The narrator is getting ready...</p>
-        <div class="audio-container">
-            <button id="playPauseButton" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
+        <!-- Back Button placed outside the main container -->
+        <div class="artefacts-container">
+            <button onclick="showArtefacts('${profile}')" class="back-button">⬅️ Back to Artefacts</button>
         </div>
-    </div>
+
+        <!-- The artefact content stays inside the container -->
+        <div class="artefacts-container">
+            <h2>${artefact}</h2>
+            <p id="loading" class="loading">🔄 Adapting description...</p>
+            <p id="artefact-description"></p>
+            <p id="audio-loading" class="loading" style="display: none;">🔊 The narrator is getting ready...</p>
+            <div class="audio-container">
+                <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
+            </div>
+        </div>
     `;
-
-            // Ensure play button always appears on mobile
-            document.getElementById("playPauseButton").style.display = "block";
-
-            // Require user interaction to trigger audio playback on mobile
-            document.getElementById("playPauseButton").addEventListener("click", () => {
-                if (!audio) return;
-
-                audio.play().then(() => {
-                    console.log("✅ Audio started on user interaction.");
-                    document.getElementById("playPauseButton").innerText = "⏸ Pause Narration";
-                }).catch(err => {
-                    console.warn("⚠️ Audio play blocked (manual interaction required).");
-                });
-            });
 
             fetchOpenAITTS(artefact, profile);
         }
-
 
         function fetchOpenAITTS(artefact, profile) {
             let originalDescription = artefactDescriptions[artefact] || "No description available.";
@@ -343,7 +327,7 @@
         }
 
 
-        // ✅ Function to request TTS from server and play when loaded
+        // ✅ Function to request TTS from server and auto-play when loaded
         function requestTTS(text) {
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-tts", {
                 method: "POST",
@@ -372,11 +356,11 @@
                     // ✅ Standard event: Show button when audio is fully loaded
                     audio.addEventListener("canplaythrough", () => {
                         console.log("🔊 TTS Ready! Showing button.");
-                        playButton.style.display = "block";
-                        loadingIndicator.style.display = "none";
+                        playButton.style.display = "block"; // Show play button
+                        loadingIndicator.style.display = "none"; // Hide loading indicator
                     });
 
-                    // ✅ Mobile Fix: Ensure button appears even if event never fires
+                    // ✅ Mobile Fix: Ensure button appears even if `canplaythrough` never fires
                     setTimeout(() => {
                         if (audio.readyState >= 2) { // Check if audio is ready
                             console.log("📢 Mobile backup: Showing play button after delay.");
