@@ -368,9 +368,13 @@
             }
 
             document.getElementById("playPauseButton").style.display = "none";
-            document.getElementById("audio-loading").style.display = "block";
+
+            if (deliveryPreference === "Auditory") {
+                document.getElementById("audio-loading").style.display = "block";
+            }
+
             document.getElementById("moreInfoButton").style.display = "none"; // ✅ Hide button while loading
-            document.getElementById("artefact-description").innerText = "🔄 Fetching more details...";
+            document.getElementById("artefact-description").innerHTML = `<span class="loading">🔄 Getting more details...</span>`;
 
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-more-info", {
                 method: "POST",
