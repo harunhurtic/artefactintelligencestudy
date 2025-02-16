@@ -265,25 +265,41 @@
             }
 
             document.getElementById("quiz-container").innerHTML = `
-        <!-- Back Button placed outside the main container -->
-        <div class="artefacts-container">
-            <button onclick="showArtefacts('${profile}')" class="back-button">⬅️ Back to Artefacts</button>
-        </div>
+    <!-- Back Button placed outside the main container -->
+    <div class="artefacts-container">
+        <button onclick="showArtefacts('${profile}')" class="back-button">⬅️ Back to Artefacts</button>
+    </div>
 
-        <!-- The artefact content stays inside the container -->
-        <div class="artefacts-container">
-            <h2>${artefact}</h2>
-            <p id="loading" class="loading">🔄 Adapting description...</p>
-            <p id="artefact-description"></p>
-            <p id="audio-loading" class="loading" style="display: none;">🔊 The narrator is getting ready...</p>
-            <div class="audio-container">
-                <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
-            </div>
+    <!-- The artefact content stays inside the container -->
+    <div class="artefacts-container">
+        <h2>${artefact}</h2>
+        <p id="loading" class="loading">🔄 Adapting description...</p>
+        <p id="artefact-description"></p>
+        <p id="audio-loading" class="loading" style="display: none;">🔊 The narrator is getting ready...</p>
+        <div class="audio-container">
+            <button id="playPauseButton" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
         </div>
+    </div>
     `;
+
+            // Ensure play button always appears on mobile
+            document.getElementById("playPauseButton").style.display = "block";
+
+            // Require user interaction to trigger audio playback on mobile
+            document.getElementById("playPauseButton").addEventListener("click", () => {
+                if (!audio) return;
+
+                audio.play().then(() => {
+                    console.log("✅ Audio started on user interaction.");
+                    document.getElementById("playPauseButton").innerText = "⏸ Pause Narration";
+                }).catch(err => {
+                    console.warn("⚠️ Audio play blocked (manual interaction required).");
+                });
+            });
 
             fetchOpenAITTS(artefact, profile);
         }
+
 
         function fetchOpenAITTS(artefact, profile) {
             let originalDescription = artefactDescriptions[artefact] || "No description available.";
