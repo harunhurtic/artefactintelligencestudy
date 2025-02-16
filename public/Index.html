@@ -354,15 +354,15 @@
                 return;
             }
 
-            // Stop and hide audio from previous adaptation if applicable
+            // Stop audio from previous adaptation if applicable
             if (audio) {
                 audio.pause();
                 audio.currentTime = 0;
                 audio = null;
             }
-            document.getElementById("playPauseButton").style.display = "none"; // Hide old audio button
 
-            // Hide "Tell Me More" button while loading
+            // Hide buttons while loading
+            document.getElementById("playPauseButton").style.display = "none";
             document.getElementById("moreInfoButton").style.display = "none";
             document.getElementById("artefact-description").innerHTML = `<span class="loading">🔄 Getting more details...</span>`;
 
@@ -375,13 +375,17 @@
                 .then(data => {
                     document.getElementById("artefact-description").innerText = data.response;
 
-                    // ✅ Show "Tell Me More" button again after fetching
+                    // Show "Tell Me More" button again after fetching
                     document.getElementById("moreInfoButton").style.display = "block";
 
-                    // ✅ If Auditory mode is selected, generate TTS **AFTER** displaying text
+                    // If Auditory mode is selected, generate TTS **AFTER** displaying text
                     if (deliveryPreference === "Auditory") {
                         document.getElementById("audio-loading").style.display = "block";
                         requestTTS(data.response);
+                    } else {
+                        // Ensure audio-related elements stay hidden for text-based users
+                        document.getElementById("audio-loading").style.display = "none";
+                        document.getElementById("playPauseButton").style.display = "none";
                     }
                 })
                 .catch(error => {
@@ -390,6 +394,7 @@
                     document.getElementById("moreInfoButton").style.display = "block"; // Show button again
                 });
         }
+
 
 
         // ✅ Function to request TTS from server and buttons when loaded
@@ -413,14 +418,16 @@
                     let playButton = document.getElementById("playPauseButton");
                     let loadingIndicator = document.getElementById("audio-loading");
 
+                    // Hide buttons while loading
                     playButton.style.display = "none";
                     loadingIndicator.style.display = "block";
+                    document.getElementById("moreInfoButton").style.display = "none"; // Ensure "Tell Me More" stays hidden
 
                     audio.addEventListener("canplaythrough", () => {
                         playButton.style.display = "block";
                         loadingIndicator.style.display = "none";
 
-                        // ✅ If this is the first TTS, show "Tell Me More" now
+                        // Only show "Tell Me More" after audio is ready (if it's the first time)
                         if (isFirstAdaptation) {
                             document.getElementById("moreInfoButton").style.display = "block";
                         }
@@ -432,7 +439,7 @@
                             loadingIndicator.style.display = "none";
                             clearInterval(checkAudioReady);
 
-                            // ✅ Enable "Tell Me More" when first audio is ready
+                            // Ensure "Tell Me More" is enabled only when audio is ready
                             if (isFirstAdaptation) {
                                 document.getElementById("moreInfoButton").style.display = "block";
                             }
@@ -444,7 +451,7 @@
                         loadingIndicator.style.display = "none";
                         clearInterval(checkAudioReady);
 
-                        // ✅ Ensure "Tell Me More" is enabled even if delayed
+                        // Ensure "Tell Me More" is enabled even if delayed
                         if (isFirstAdaptation) {
                             document.getElementById("moreInfoButton").style.display = "block";
                         }
@@ -462,6 +469,7 @@
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
+
 
 
         async function playTTS(text) {
