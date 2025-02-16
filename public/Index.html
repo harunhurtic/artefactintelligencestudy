@@ -356,14 +356,16 @@
                 return;
             }
 
+            // Stop and hide audio from previous adaptation if applicable
             if (audio) {
                 audio.pause();
                 audio.currentTime = 0;
                 audio = null;
             }
+            document.getElementById("playPauseButton").style.display = "none"; // Hide old audio button
 
-            document.getElementById("playPauseButton").style.display = "none";
-            document.getElementById("moreInfoButton").style.display = "none"; // ✅ Hide button while loading
+            // Hide "Tell Me More" button while loading
+            document.getElementById("moreInfoButton").style.display = "none";
             document.getElementById("artefact-description").innerHTML = `<span class="loading">🔄 Getting more details...</span>`;
 
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-more-info", {
@@ -373,13 +375,12 @@
             })
                 .then(response => response.json())
                 .then(data => {
-                    // ✅ Hide the loading text
                     document.getElementById("artefact-description").innerText = data.response;
 
-                    // ✅ Show "Tell Me More" button again
+                    // ✅ Show "Tell Me More" button again after fetching
                     document.getElementById("moreInfoButton").style.display = "block";
 
-                    // ✅ If Auditory mode is selected, start TTS **AFTER** the text is displayed
+                    // ✅ If Auditory mode is selected, generate TTS **AFTER** displaying text
                     if (deliveryPreference === "Auditory") {
                         document.getElementById("audio-loading").style.display = "block";
                         requestTTS(data.response);
@@ -391,6 +392,7 @@
                     document.getElementById("moreInfoButton").style.display = "block"; // Show button again
                 });
         }
+
 
         // ✅ Function to request TTS from server and buttons when loaded
         function requestTTS(text, isFirstAdaptation = false) {
