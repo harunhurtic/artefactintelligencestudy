@@ -337,6 +337,8 @@
                 .then(response => response.blob())
                 .then(audioBlob => {
                     let audioURL = URL.createObjectURL(audioBlob);
+
+                    // Stop existing audio
                     if (audio) {
                         audio.pause();
                         audio.currentTime = 0;
@@ -345,26 +347,38 @@
                     audio = new Audio(audioURL);
 
                     // ✅ Ensure the button remains hidden until audio is fully ready
-                    document.getElementById("playPauseButton").style.display = "none";
+                    const playPauseButton = document.getElementById("playPauseButton");
+                    if (!playPauseButton) {
+                        console.error("❌ playPauseButton not found!");
+                        return;
+                    }
+
+                    playPauseButton.style.display = "none"; // Hide initially
 
                     audio.addEventListener("canplaythrough", () => {
-                        console.log("🔊 TTS Ready!");
-                        document.getElementById("playPauseButton").style.display = "block";
+                        console.log("🔊 TTS Ready! Making play button visible...");
+
+                        // ✅ Force reflow/repaint to fix mobile issues
+                        playPauseButton.style.display = "block";
+                        playPauseButton.offsetHeight; // Trigger reflow
+                        playPauseButton.style.opacity = "1";
+
                         document.getElementById("audio-loading").style.display = "none";
+
+                        console.log("🎵 Play button should now be visible:", playPauseButton.style.display);
                     });
 
-                    document.getElementById("audio-loading").style.display = "none";
-
+                    // ✅ Handle playback end (reset button text)
                     audio.onended = () => {
-                        document.getElementById("playPauseButton").innerText = "🔊 Listen To Narration";
+                        playPauseButton.innerText = "🔊 Listen To Narration";
                     };
                 })
                 .catch(error => {
                     console.error("❌ Error playing TTS:", error);
                     document.getElementById("audio-loading").style.display = "none";
                 });
-
         }
+
 
         async function playTTS(text) {
             try {
