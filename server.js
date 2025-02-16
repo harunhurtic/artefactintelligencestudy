@@ -77,6 +77,7 @@ app.post("/fetch-description", async (req, res) => {
     const { artefact, originalDescription, profile, participantId } = req.body;
 
     if (!artefact || !originalDescription || !profile || !participantId) {
+        console.error("❌ Missing required fields");
         return res.status(400).json({ error: "Missing artefact, profile, or participantId" });
     }
 
@@ -95,10 +96,11 @@ app.post("/fetch-description", async (req, res) => {
             });
 
             const threadData = await threadResponse.json();
+            console.log("🔍 Thread Data:", JSON.stringify(threadData, null, 2));
 
             if (!threadData.id) {
-                console.error("❌ Failed to create a new thread.");
-                return res.status(500).json({ response: "Error: Could not create a new assistant thread." });
+                console.error("❌ Failed to create thread.");
+                return res.status(500).json({ response: "Error: Could not create assistant thread." });
             }
 
             thread = new Thread({
@@ -109,9 +111,9 @@ app.post("/fetch-description", async (req, res) => {
             });
 
             await thread.save();
-            console.log(`✅ Created and saved new Thread ID: ${thread.threadId} (Participant: ${participantId})`);
+            console.log(`✅ Created Thread ID: ${thread.threadId} for Participant: ${participantId}`);
         } else {
-            console.log(`🔄 Reusing existing Thread ID: ${thread.threadId} for Participant: ${participantId}`);
+            console.log(`🔄 Using existing Thread ID: ${thread.threadId}`);
         }
 
         console.log("📝 Sending prompt to Assistant...");
@@ -123,8 +125,10 @@ app.post("/fetch-description", async (req, res) => {
         });
 
         const messageData = await messageResponse.json();
+        console.log("🔍 Message Data:", JSON.stringify(messageData, null, 2));
+
         if (!messageData.id) {
-            console.error("❌ Failed to add message to assistant.");
+            console.error("❌ Failed to add message.");
             return res.status(500).json({ response: "Error: Could not send prompt to assistant." });
         }
 
@@ -137,13 +141,15 @@ app.post("/fetch-description", async (req, res) => {
         });
 
         const runData = await runResponse.json();
+        console.log("🔍 Run Data:", JSON.stringify(runData, null, 2));
+
         if (!runData.id) {
-            console.error("❌ Failed to start assistant run.");
-            return res.status(500).json({ response: "Error: Could not start the assistant processing." });
+            console.error("❌ Failed to start assistant.");
+            return res.status(500).json({ response: "Error: Assistant could not start processing." });
         }
 
         const runId = runData.id;
-        console.log(`✅ Assistant Run ID: ${runId}, Participant ID: ${participantId}`);
+        console.log(`✅ Run started. Run ID: ${runId}`);
 
         let status = "in_progress";
         let responseContent = "";
@@ -151,11 +157,11 @@ app.post("/fetch-description", async (req, res) => {
 
         while (status === "in_progress" || status === "queued") {
             if (attemptCount > 10) {
-                console.error("⏳ Assistant took too long to respond. Timing out.");
-                return res.status(500).json({ response: "Error: Assistant processing took too long." });
+                console.error("⏳ Assistant took too long. Timing out.");
+                return res.status(500).json({ response: "Error: Assistant took too long to respond." });
             }
 
-            await new Promise(resolve => setTimeout(resolve, 3000));  // Wait 3 seconds before checking again
+            await new Promise(resolve => setTimeout(resolve, 3000));  // Wait 3s before checking again
             attemptCount++;
 
             const checkRunResponse = await fetch(`https://api.openai.com/v1/threads/${thread.threadId}/runs/${runId}`, {
@@ -163,8 +169,9 @@ app.post("/fetch-description", async (req, res) => {
             });
 
             const checkRunData = await checkRunResponse.json();
+            console.log("⏳ Assistant Status:", checkRunData.status);
+
             status = checkRunData.status;
-            console.log("⏳ Adaptation Status:", status);
 
             if (status === "failed") {
                 console.error("❌ Assistant Run Failed:", checkRunData);
@@ -178,38 +185,32 @@ app.post("/fetch-description", async (req, res) => {
                 });
 
                 const messagesData = await messagesResponse.json();
-                console.log("📥 OpenAI Messages:", JSON.stringify(messagesData, null, 2));
+                console.log("📥 Messages Data:", JSON.stringify(messagesData, null, 2));
 
                 const assistantMessage = messagesData.data.find(msg => msg.role === "assistant");
 
                 if (!assistantMessage || !assistantMessage.content || !assistantMessage.content[0]) {
-                    console.error("⚠️ No valid response received from Assistant.");
+                    console.error("⚠️ No valid response from Assistant.");
                     return res.status(500).json({ response: "Error: Assistant did not return a valid response." });
                 }
 
                 responseContent = assistantMessage.content[0].text.value;
-
-                // Save the message in MongoDB
-                await Thread.findOneAndUpdate(
-                    { threadId: thread.threadId },
-                    { $push: { messages: { role: "assistant", content: responseContent, timestamp: new Date() } } }
-                );
-
                 break;
             }
         }
 
         if (!responseContent) {
-            responseContent = `Error: No valid response received. Here's the original artefact description:\n\n${originalDescription}`;
+            responseContent = `Error: No valid response. Showing original description:\n\n${originalDescription}`;
         }
 
         res.json({ response: responseContent });
 
     } catch (error) {
-        console.error("❌ Error fetching from Assistant:", error);
-        res.status(500).json({ response: `The adaptation failed. Here's the original description:\n\n${originalDescription}` });
+        console.error("❌ Error with Assistant:", error);
+        res.status(500).json({ response: `Error: The adaptation failed. Here's the original description:\n\n${originalDescription}` });
     }
 });
+
 
 
 
