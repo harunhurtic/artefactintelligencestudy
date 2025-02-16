@@ -215,23 +215,19 @@ app.post("/fetch-more-info", async (req, res) => {
         return res.status(400).json({ error: "Missing artefact, profile, or participantId" });
     }
 
-    let prompt = `The visitor wants to learn more about the artefact "${artefact}" for a "${profile}" visitor. Provide additional historical or cultural insights.`;
-
     try {
-        console.log("🟢 Creating additional info thread...");
+        console.log(`🔍 Searching for existing thread for Participant ID: ${participantId}...`);
+        let thread = await Thread.findOne({ participantId });
 
-        const threadResponse = await fetch("https://api.openai.com/v1/threads", {
-            method: "POST",
-            headers: OPENAI_HEADERS,
-            body: JSON.stringify({ metadata: { participantId } }),
-            timeout: 60000,
-        });
+        if (!thread) {
+            console.error("❌ No existing thread found for this participant.");
+            return res.status(400).json({ error: "No existing thread found. Please start again." });
+        }
 
-        const threadData = await threadResponse.json();
-        if (!threadData.id) throw new Error("Failed to create thread");
+        let threadId = thread.threadId;
+        console.log(`✅ Found existing thread: ${threadId}`);
 
-        const threadId = threadData.id;
-        console.log(`✅ Created Thread ID: ${threadId} (Participant: ${participantId})`);
+        let prompt = `The visitor wants to learn more about the artefact "${artefact}" for a "${profile}" visitor. Provide additional historical or cultural insights.`;
 
         console.log(`📝 Sending additional prompt to Assistant:\n${prompt}`);
         const messageResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
@@ -289,6 +285,12 @@ app.post("/fetch-more-info", async (req, res) => {
                 if (assistantMessage && assistantMessage.content && assistantMessage.content[0].text) {
                     responseContent = assistantMessage.content[0].text.value;
                     console.log(`🟢 Assistant additional info received for Participant ${participantId}:`, responseContent);
+
+                    // ✅ Store AI response in MongoDB
+                    await Thread.findOneAndUpdate(
+                        { threadId },
+                        { $push: { messages: { role: "assistant", content: responseContent, timestamp: new Date() } } }
+                    );
                 }
                 break;
             }
@@ -305,8 +307,6 @@ app.post("/fetch-more-info", async (req, res) => {
         res.status(500).json({ response: "Failed to fetch additional information." });
     }
 });
-
-
 
 // API route for fetching TTS audio
 app.post("/fetch-tts", async (req, res) => {
