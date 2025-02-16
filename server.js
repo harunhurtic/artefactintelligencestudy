@@ -206,7 +206,7 @@ app.post("/fetch-description", async (req, res) => {
 
 // API route for fetching additional artefact details (for "Tell Me More" button)
 app.post("/fetch-more-info", async (req, res) => {
-    console.log("🛠️ Received fetch-more-info request:", req.body); // ✅ Debugging log
+    console.log("🛠️ Received fetch-more-info request:", req.body);
 
     const { artefact, profile, participantId } = req.body;
 
@@ -270,27 +270,58 @@ app.post("/fetch-more-info", async (req, res) => {
 
             if (status === "failed") {
                 console.error("❌ Assistant Run Failed:", checkRunData);
-                break;
-            }
 
-            if (status === "completed") {
-                console.log("📩 Fetching Assistant's Additional Info Response...");
-                const messagesResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
-                    headers: OPENAI_HEADERS,
-                });
+                if (checkRunData.last_error && checkRunData.last_error.code === "rate_limit_exceeded") {
+                    console.warn("⚠️ Rate Limit Exceeded. Retrying with a smaller input...");
 
-                const messagesData = await messagesResponse.json();
-                const assistantMessage = messagesData.data.find(msg => msg.role === "assistant");
+                    let shortPrompt = `Summarize additional insights on "${artefact}" for a "${profile}" visitor.`;
+                    console.log(`🔄 Sending shorter prompt: ${shortPrompt}`);
 
-                if (assistantMessage && assistantMessage.content && assistantMessage.content[0].text) {
-                    responseContent = assistantMessage.content[0].text.value;
-                    console.log(`🟢 Assistant additional info received for Participant ${participantId}:`, responseContent);
+                    const retryResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
+                        method: "POST",
+                        headers: OPENAI_HEADERS,
+                        body: JSON.stringify({ role: "user", content: shortPrompt }),
+                        timeout: 60000,
+                    });
 
-                    // ✅ Store AI response in MongoDB
-                    await Thread.findOneAndUpdate(
-                        { threadId },
-                        { $push: { messages: { role: "assistant", content: responseContent, timestamp: new Date() } } }
-                    );
+                    const retryData = await retryResponse.json();
+                    if (!retryData.id) throw new Error("Failed to add retry message");
+
+                    console.log("▶️ Retrying Assistant...");
+                    const retryRunResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs`, {
+                        method: "POST",
+                        headers: OPENAI_HEADERS,
+                        body: JSON.stringify({ assistant_id: process.env.ASSISTANT_ID }),
+                        timeout: 60000,
+                    });
+
+                    const retryRunData = await retryRunResponse.json();
+                    if (!retryRunData.id) throw new Error("Failed to run retry assistant");
+
+                    const retryRunId = retryRunData.id;
+                    console.log(`✅ Retry Run ID: ${retryRunId}`);
+
+                    while (status === "in_progress" || status === "queued") {
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        const retryCheckRunResponse = await fetch(
+                            `https://api.openai.com/v1/threads/${threadId}/runs/${retryRunId}`,
+                            { headers: OPENAI_HEADERS }
+                        );
+                        const retryCheckRunData = await retryCheckRunResponse.json();
+                        status = retryCheckRunData.status;
+
+                        if (status === "completed") {
+                            console.log("📩 Fetching Assistant's Retry Response...");
+                            const messagesResponse = await fetch(
+                                `https://api.openai.com/v1/threads/${threadId}/messages`,
+                                { headers: OPENAI_HEADERS }
+                            );
+                            const messagesData = await messagesResponse.json();
+                            const assistantMessage = messagesData.data.find(msg => msg.role === "assistant");
+                            responseContent = assistantMessage ? assistantMessage.content[0].text.value : "No additional info found.";
+                            break;
+                        }
+                    }
                 }
                 break;
             }
@@ -307,6 +338,7 @@ app.post("/fetch-more-info", async (req, res) => {
         res.status(500).json({ response: "Failed to fetch additional information." });
     }
 });
+
 
 // API route for fetching TTS audio
 app.post("/fetch-tts", async (req, res) => {
