@@ -343,7 +343,7 @@
         }
 
 
-        // ✅ Function to request TTS from server and auto-play when loaded
+        // ✅ Function to request TTS from server and play when loaded
         function requestTTS(text) {
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-tts", {
                 method: "POST",
@@ -362,18 +362,18 @@
 
                     audio = new Audio(audioURL);
 
-                    // Ensure button is hidden initially
                     let playButton = document.getElementById("playPauseButton");
                     let loadingIndicator = document.getElementById("audio-loading");
 
+                    // Ensure button starts hidden, loading starts visible
                     playButton.style.display = "none";
-                    loadingIndicator.style.display = "block"; // Show loading text
+                    loadingIndicator.style.display = "block";
 
                     // ✅ Standard event: Show button when audio is fully loaded
                     audio.addEventListener("canplaythrough", () => {
                         console.log("🔊 TTS Ready! Showing button.");
-                        playButton.style.display = "block"; // Show play button
-                        loadingIndicator.style.display = "none"; // Hide loading indicator
+                        playButton.style.display = "block";
+                        loadingIndicator.style.display = "none";
                     });
 
                     // ✅ Mobile Fix: Ensure button appears even if event never fires
@@ -385,19 +385,10 @@
                         }
                     }, 3000); // Wait 3 seconds as a fallback
 
-                    // ✅ Ensure button interaction works on mobile
-                    playButton.addEventListener("click", () => {
-                        if (!audio) return;
+                    // ✅ Fix: Ensure Play/Pause works correctly on both Desktop & Mobile
+                    playButton.onclick = () => toggleAudio();
 
-                        audio.play().then(() => {
-                            console.log("✅ Audio started on user interaction.");
-                            playButton.innerText = "⏸ Pause Narration";
-                        }).catch(err => {
-                            console.warn("⚠️ Audio play blocked, user interaction required.", err);
-                        });
-                    });
-
-                    // ✅ Reset button text after audio finishes
+                    // ✅ Ensure button text resets when playback ends
                     audio.onended = () => {
                         console.log("🔇 TTS Playback Ended");
                         playButton.innerText = "🔊 Listen To Narration";
@@ -454,14 +445,17 @@
             if (!audio) return; // Ensure audio exists
 
             if (audio.paused) {
-                audio.play();
-                document.getElementById("playPauseButton").innerText = "⏸ Pause Narration";
+                audio.play().then(() => {
+                    console.log("✅ Audio started.");
+                    document.getElementById("playPauseButton").innerText = "⏸ Pause Narration";
+                }).catch(error => {
+                    console.warn("⚠️ Audio play blocked, user interaction required.", error);
+                });
             } else {
                 audio.pause();
                 document.getElementById("playPauseButton").innerText = "▶️ Continue Narration";
             }
         }
-
 
         function renderPreferences() {
             document.getElementById("quiz-container").innerHTML = `
