@@ -330,13 +330,12 @@
                         document.getElementById("artefact-description").innerText = data.response;
                     }
 
-                    // ✅ Always show "Tell Me More" after text is generated
-                    document.getElementById("moreInfoButton").style.display = "block";
-
                     // ✅ If user prefers audio, generate narration
                     if (deliveryPreference === "Auditory") {
-                        document.getElementById("audio-loading").style.display = "block";
-                        requestTTS(data.response);
+                        document.getElementById("audio-loading").style.display = "block";  // Show narrator loading
+                        requestTTS(data.response, true); // ✅ Pass 'true' to indicate initial adaptation TTS
+                    } else {
+                        document.getElementById("moreInfoButton").style.display = "block"; // ✅ Show Tell Me More if not auditory
                     }
                 })
                 .catch(error => {
@@ -345,10 +344,10 @@
                     document.getElementById("artefact-description").innerText =
                         `The adaptation failed. However, here's the original artefact description:\n\n${originalDescription}`;
 
-                    // ✅ Show "Tell Me More" even if request fails
-                    document.getElementById("moreInfoButton").style.display = "block";
+                    document.getElementById("moreInfoButton").style.display = "block"; // ✅ Ensure Tell Me More is shown
                 });
         }
+
 
 
         function requestMoreInfo(artefact, profile) {
@@ -394,7 +393,7 @@
         }
 
         // ✅ Function to request TTS from server and buttons when loaded
-        function requestTTS(text) {
+        function requestTTS(text, isFirstAdaptation = false) {
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-tts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -420,6 +419,11 @@
                     audio.addEventListener("canplaythrough", () => {
                         playButton.style.display = "block";
                         loadingIndicator.style.display = "none";
+
+                        // ✅ If this is the first TTS, show "Tell Me More" now
+                        if (isFirstAdaptation) {
+                            document.getElementById("moreInfoButton").style.display = "block";
+                        }
                     });
 
                     let checkAudioReady = setInterval(() => {
@@ -427,6 +431,11 @@
                             playButton.style.display = "block";
                             loadingIndicator.style.display = "none";
                             clearInterval(checkAudioReady);
+
+                            // ✅ Enable "Tell Me More" when first audio is ready
+                            if (isFirstAdaptation) {
+                                document.getElementById("moreInfoButton").style.display = "block";
+                            }
                         }
                     }, 1000);
 
@@ -434,13 +443,17 @@
                         playButton.style.display = "block";
                         loadingIndicator.style.display = "none";
                         clearInterval(checkAudioReady);
+
+                        // ✅ Ensure "Tell Me More" is enabled even if delayed
+                        if (isFirstAdaptation) {
+                            document.getElementById("moreInfoButton").style.display = "block";
+                        }
                     }, 5000);
 
                     playButton.onclick = () => toggleAudio();
 
                     audio.onended = () => {
                         playButton.innerText = "🔊 Listen To Narration";
-                        document.getElementById("moreInfoButton").style.display = "block";  // ✅ Always keep "Tell Me More" visible
                     };
 
                 })
@@ -449,6 +462,7 @@
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
+
 
         async function playTTS(text) {
             try {
