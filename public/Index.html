@@ -295,16 +295,19 @@
             <h2>${artefact}</h2>
             <p id="loading" class="loading">🔄 Adapting description...</p>
             <p id="artefact-description"></p>
+        </div>
+
+        <!-- Sticky Audio Controls at the Bottom -->
+        <div class="sticky-audio-controls">
             <p id="audio-loading" class="loading" style="display: none;">🔊 The narrator is getting ready...</p>
-            <div class="audio-container">
-                <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
-                <button id="moreInfoButton" onclick="requestMoreInfo('${artefact}', '${profile}')" class="audio-button" style="display: none;">📜 Tell Me More...</button>
-            </div>
+            <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
+            <button id="moreInfoButton" onclick="requestMoreInfo('${artefact}', '${profile}')" class="audio-button" style="display: none;">📜 Tell Me More...</button>
         </div>
     `;
 
             fetchOpenAITTS(artefact, profile);
         }
+
 
         function fetchOpenAITTS(artefact, profile) {
             let originalDescription = artefactDescriptions[artefact] || "No description available.";
