@@ -270,7 +270,7 @@
         <div class="artefacts-container">
             <h2>Select an Artefact:</h2>
             <div class="artefact-container">
-                <button class="artefact-button" onclick='showArtefactDetails("Kinne", "${profile}")'>📜 Kinne</button>
+                <button class="artefact-button" onclick='showArtefactDetails("Kinne", "${profile}")'>🧈 Kinne</button>
                 <button class="artefact-button" onclick='showArtefactDetails("Handwritten Cookbook", "${profile}")'>📖 Handwritten Cookbook</button>
                 <button class="artefact-button" onclick='showArtefactDetails("Tinbox with a Hinged Lid", "${profile}")'> 📦 Tinbox with a Hinged Lid</button>
             </div>
@@ -308,8 +308,6 @@
 
         function fetchOpenAITTS(artefact, profile) {
             let originalDescription = artefactDescriptions[artefact] || "No description available.";
-
-            let prompt = `Adapt the following artefact description for a ${profile} visitor:\n\n**Participant ID:** ${participantId}\n**Artefact:** ${artefact}\n**Original Description:** ${originalDescription}`;
 
             document.getElementById("loading").style.display = "block";
             document.getElementById("artefact-description").innerText = "";
