@@ -190,12 +190,6 @@ body {
     display: none;
 }
 
-/* Prevent text from being covered */
-#artefact-description {
-    padding-bottom: 120px;
-    /* Matches the height of the sticky controls */
-}
-
 /* Buttons inside the sticky section */
 .sticky-audio-controls .audio-button {
     width: 90%;
