@@ -120,9 +120,8 @@
             }
 
             console.log(`✅ Participant ID set: ${participantId}`); // Log the ID for debugging
-            renderQuiz();  // Proceed to the quiz
+            renderQuiz();  // Proceed to the questionnaire
         }
-
 
         function renderQuiz() {
             let quizContainer = document.getElementById("quiz-container");
@@ -134,10 +133,10 @@
 
             quizContainer.innerHTML = `
         <div class="artefacts-container">
-        <h1>Lillehammer Museum - Artefacts </h1>
-        <button id="clear-button" onclick="clearSelections()" style="font-size: 1.2em; padding: 10px;">Clear All Answers</button>
+            <h1>Lillehammer Museum - Artefacts</h1>
+            <button id="clear-button" onclick="clearSelections()" style="font-size: 1.2em; padding: 10px;">Clear All Answers</button>
         </div>
-        <h3 id = "pleaseAnswerQuestionsText">Please Answer A Few Questions </h3>
+        <h3 id="pleaseAnswerQuestionsText">Please Answer A Few Questions </h3>
         <div id="quiz"></div>
         <h3 id="result"></h3>
     `;
@@ -165,7 +164,11 @@
 
                 quizDiv.appendChild(questionDiv);
             });
+
+            // Ensure the "Next" button appears if all questions were answered before
+            assignProfile();
         }
+
 
         function selectAnswer(questionIndex, optionIndex, button) {
             let selectedOption = questions[questionIndex].options[optionIndex];
@@ -288,20 +291,24 @@
             <button onclick="showArtefacts('${profile}')" class="back-button">⬅️ Back to Artefacts</button>
         </div>
 
-        <div class="artefacts-container">
+        <!-- Narrator Loading and Audio Card (Hidden by Default) -->
+        <div id="audio-card" class="card" style="display: none;">
+            <p id="audio-loading" class="loading">🔊 The narrator is getting ready...</p>
+            <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
+        </div>
+
+        <!-- Artefact Description Card -->
+        <div class="card">
             <h2>${artefact}</h2>
             <p id="loading" class="loading">🔄 Adapting description...</p>
             <p id="artefact-description"></p>
-            <p id="audio-loading" class="loading" style="display: none;">🔊 The narrator is getting ready...</p>
-            <div class="audio-container">
-                <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
-                <button id="moreInfoButton" onclick="requestMoreInfo('${artefact}', '${profile}')" class="audio-button" style="display: none;">📜 Tell Me More...</button>
-            </div>
+            <button id="moreInfoButton" onclick="requestMoreInfo('${artefact}', '${profile}')" class="audio-button" style="display: none;">📜 Tell Me More...</button>
         </div>
     `;
 
             fetchOpenAITTS(artefact, profile);
         }
+
 
         function fetchOpenAITTS(artefact, profile) {
             let originalDescription = artefactDescriptions[artefact] || "No description available.";
@@ -372,7 +379,7 @@
             moreInfoButton.style.display = "none";
             loadingIndicator.style.display = "none";
 
-            document.getElementById("artefact-description").innerHTML = `<span class="loading">🔄 Getting more details...</span>`;
+            document.getElementById("artefact-description").innerHTML = `<span class="loading">🔄 Getting additional information...</span>`;
 
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-more-info", {
                 method: "POST",
@@ -394,7 +401,7 @@
                 })
                 .catch(error => {
                     console.error("❌ Error fetching more details:", error);
-                    document.getElementById("artefact-description").innerText = "Failed to fetch additional information.";
+                    document.getElementById("artefact-description").innerText = "Failed to get additional information.";
                     moreInfoButton.style.display = "block"; // Restore button in case of failure
                 });
         }
@@ -424,11 +431,13 @@
 
                     audio = new Audio(audioURL);
 
+                    let audioCard = document.getElementById("audio-card");
                     let playButton = document.getElementById("playPauseButton");
                     let loadingIndicator = document.getElementById("audio-loading");
                     let moreInfoButton = document.getElementById("moreInfoButton");
 
-                    // Hide buttons while waiting for audio
+                    // Show the audio card when loading starts
+                    audioCard.style.display = "block";
                     playButton.style.display = "none";
                     loadingIndicator.style.display = "block";
                     moreInfoButton.style.display = "none";
@@ -469,9 +478,10 @@
                 .catch(error => {
                     console.error("❌ Error fetching TTS:", error);
                     document.getElementById("audio-loading").style.display = "none";
-                    alert("Audio failed to load. Please try again.");
+                    document.getElementById("artefact-description").innerText = "Narrator failed to load. Please try again.";
                 });
         }
+
 
         async function playTTS(text) {
             try {
