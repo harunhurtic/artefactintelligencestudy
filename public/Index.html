@@ -428,16 +428,18 @@
                     moreInfoButton.style.display = "none";
 
                     audio.addEventListener("canplaythrough", () => {
+                        // ✅ Do NOT autoplay, just make play button available
                         playButton.style.display = "block";
                         loadingIndicator.style.display = "none";
                         playButton.innerText = "🔊 Listen To Narration";
 
-                        // ✅ Only restore "Tell Me More" **after narration is loaded**
+                        // ✅ Show "Tell Me More" button only after narration loads (if applicable)
                         if (isFromMoreInfo) {
                             moreInfoButton.style.display = "block";
                         }
                     });
 
+                    // ✅ No autoplay! User must manually click play button
                     playButton.onclick = () => toggleAudio();
                     audio.onended = () => {
                         playButton.innerText = "🔊 Listen To Narration";
@@ -448,6 +450,7 @@
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
+
 
         async function playTTS(text) {
             try {
@@ -505,6 +508,7 @@
                 playButton.innerText = "▶️ Continue Narration";
             }
         }
+
 
         function renderPreferences() {
             document.getElementById("quiz-container").innerHTML = `
