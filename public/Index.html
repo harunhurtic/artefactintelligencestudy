@@ -366,7 +366,7 @@
             const moreInfoButton = document.getElementById("moreInfoButton");
             const loadingIndicator = document.getElementById("audio-loading");
 
-            // ✅ Hide buttons while fetching data
+            // ✅ Hide all buttons immediately
             playButton.style.display = "none";
             moreInfoButton.style.display = "none";
             loadingIndicator.style.display = "none";
@@ -382,11 +382,12 @@
                 .then(data => {
                     document.getElementById("artefact-description").innerText = data.response;
 
-                    // ✅ Ensure buttons only appear when everything is ready
+                    // ✅ Ensure buttons only appear when everything is fully loaded
                     if (deliveryPreference === "Auditory") {
                         loadingIndicator.style.display = "block"; // Show narrator loading
                         requestTTS(data.response, true);
                     } else {
+                        // ✅ Buttons only reappear once fetching is 100% complete
                         moreInfoButton.style.display = "block";
                     }
                 })
@@ -396,6 +397,7 @@
                     moreInfoButton.style.display = "block"; // Restore button in case of failure
                 });
         }
+
 
 
         // ✅ Function to request TTS from server and buttons when loaded
@@ -446,7 +448,6 @@
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
-
 
         async function playTTS(text) {
             try {
