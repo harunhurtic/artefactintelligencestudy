@@ -80,7 +80,7 @@ app.post("/fetch-description", async (req, res) => {
         return res.status(400).json({ error: "Missing artefact, profile, or participantId" });
     }
 
-    let prompt = `Adapt the following artefact description for a visitor with the "${profile}" profile:\n\n**Artefact:** ${artefact}\n**Description:** ${originalDescription}`;
+    let prompt = `Adapt the following artefact description and make it more engaging for a museum visitor with the ${profile} profile while preserving factual accuracy. Ensure the adaptation is a seamless museum description that aligns with their preferences, interests and motivations, without explicitly mentioning their profile or adding unnecessary details: \n Artefact: ${artefact}\n Description: ${originalDescription}`;
 
     try {
         let thread = await Thread.findOne({ participantId });
