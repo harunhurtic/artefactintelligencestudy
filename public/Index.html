@@ -366,10 +366,10 @@
             const moreInfoButton = document.getElementById("moreInfoButton");
             const loadingIndicator = document.getElementById("audio-loading");
 
-            // Hide buttons while fetching new details
+            // ✅ Hide buttons while fetching data
             playButton.style.display = "none";
             moreInfoButton.style.display = "none";
-            loadingIndicator.style.display = "none"; // Hide narration loading initially
+            loadingIndicator.style.display = "none";
 
             document.getElementById("artefact-description").innerHTML = `<span class="loading">🔄 Getting more details...</span>`;
 
@@ -382,26 +382,25 @@
                 .then(data => {
                     document.getElementById("artefact-description").innerText = data.response;
 
-                    // Ensure buttons only appear when content is ready
+                    // ✅ Ensure buttons only appear when everything is ready
                     setTimeout(() => {
                         if (deliveryPreference === "Auditory") {
                             loadingIndicator.style.display = "block"; // Show narrator loading
                             playButton.innerText = "🔊 Listen To Narration";
-                            requestTTS(data.response, true);
+                            requestTTS(data.response, true); // ✅ Wait for TTS before showing buttons
                         } else {
                             loadingIndicator.style.display = "none";
                             playButton.style.display = "none";
-                            moreInfoButton.style.display = "block"; // Restore only when fully loaded
+                            moreInfoButton.style.display = "block";
                         }
-                    }, 500); // Small delay ensures smooth reappearance
+                    }, 500);
                 })
                 .catch(error => {
                     console.error("❌ Error fetching more details:", error);
                     document.getElementById("artefact-description").innerText = "Failed to fetch additional information.";
-                    moreInfoButton.style.display = "block"; // Restore button
+                    moreInfoButton.style.display = "block";
                 });
         }
-
 
         // ✅ Function to request TTS from server and buttons when loaded
         function requestTTS(text, isFromMoreInfo = false) {
@@ -425,10 +424,10 @@
                     let loadingIndicator = document.getElementById("audio-loading");
                     let moreInfoButton = document.getElementById("moreInfoButton");
 
-                    // Hide buttons while generating new narration
+                    // ✅ Hide buttons while generating new narration
                     playButton.style.display = "none";
                     loadingIndicator.style.display = "block";
-                    moreInfoButton.style.display = "none"; // Ensure "Tell Me More" stays hidden while generating
+                    moreInfoButton.style.display = "none";
 
                     audio.addEventListener("canplaythrough", () => {
                         setTimeout(() => {
@@ -436,11 +435,11 @@
                             loadingIndicator.style.display = "none";
                             playButton.innerText = "🔊 Listen To Narration";
 
-                            // ✅ Restore "Tell Me More" button only **after** narration has fully loaded
+                            // ✅ Only restore "Tell Me More" **after narration is loaded**
                             if (isFromMoreInfo) {
                                 moreInfoButton.style.display = "block";
                             }
-                        }, 300);  // Small delay to avoid flickering
+                        }, 300);
                     });
 
                     let checkAudioReady = setInterval(() => {
@@ -448,11 +447,8 @@
                             playButton.style.display = "block";
                             loadingIndicator.style.display = "none";
                             clearInterval(checkAudioReady);
-
-                            // ✅ Ensure play button is fully reset
                             playButton.innerText = "🔊 Listen To Narration";
 
-                            // ✅ Restore "Tell Me More" only **after** narration has loaded
                             if (isFromMoreInfo) {
                                 moreInfoButton.style.display = "block";
                             }
@@ -463,11 +459,8 @@
                         playButton.style.display = "block";
                         loadingIndicator.style.display = "none";
                         clearInterval(checkAudioReady);
-
-                        // ✅ Ensure play button is fully reset
                         playButton.innerText = "🔊 Listen To Narration";
 
-                        // ✅ Restore "Tell Me More" button (if needed) only **after** narration is loaded
                         if (isFromMoreInfo) {
                             moreInfoButton.style.display = "block";
                         }
@@ -484,6 +477,7 @@
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
+
 
 
         async function playTTS(text) {

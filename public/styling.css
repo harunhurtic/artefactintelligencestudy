@@ -64,7 +64,8 @@ body {
 .option-button,
 .artefact-button,
 .nav-button,
-.audio-button {
+.audio-button,
+.back-button {
     display: block;
     width: 100%;
     background-color: #5c3d9e;
@@ -81,7 +82,8 @@ body {
 .option-button:hover,
 .artefact-button:hover,
 .nav-button:hover,
-.audio-button:hover {
+.audio-button:hover,
+.back-button:hover {
     background-color: #4a2f7a;
     transform: scale(1.05);
 }
@@ -102,23 +104,6 @@ body {
     text-align: center;
     margin-bottom: 20px;
     /* Adds space between containers */
-}
-
-/* Back Button */
-.back-button {
-    background-color: #5c3d9e;
-    color: white;
-    padding: 10px 15px;
-    font-size: 16px;
-    margin-bottom: 5px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s ease-in-out;
-}
-
-.back-button:hover {
-    background-color: #4a2f7a;
-    transform: scale(1.05);
 }
 
 /* Back Button in Its Own Card */
