@@ -420,29 +420,21 @@
                     let loadingIndicator = document.getElementById("audio-loading");
                     let moreInfoButton = document.getElementById("moreInfoButton");
 
-                    // ✅ Hide buttons while generating new narration
+                    // Hide buttons while waiting for audio to load
                     playButton.style.display = "none";
                     loadingIndicator.style.display = "block";
                     moreInfoButton.style.display = "none";
 
-                    audio.addEventListener("canplaythrough", () => {
-                        // ✅ Do NOT autoplay, just make play button available
+                    // ✅ Use "loadeddata" instead of "canplaythrough" to avoid indefinite loading on mobile
+                    audio.addEventListener("loadeddata", () => {
                         playButton.style.display = "block";
                         loadingIndicator.style.display = "none";
                         playButton.innerText = "🔊 Listen To Narration";
 
-                        // ✅ Ensure "Tell Me More" button only appears after narration loads
                         if (isFromMoreInfo) {
                             moreInfoButton.style.display = "block";
                         }
                     });
-
-                    // ✅ Fix for mobile browsers: Ensure user interaction is needed before playing
-                    document.addEventListener("click", () => {
-                        audio.play().catch(() => {
-                            console.warn("⚠️ Audio blocked by mobile browser. Requires user interaction.");
-                        });
-                    }, { once: true });
 
                     playButton.onclick = () => toggleAudio();
                     audio.onended = () => {
@@ -454,7 +446,6 @@
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
-
 
         async function playTTS(text) {
             try {
