@@ -294,11 +294,11 @@
         <div class="artefacts-container">
             <h2>${artefact}</h2>
             <p id="loading" class="loading">🔄 Adapting description...</p>
-            <p id="artefact-description"></p>
+            <p id="artefact-description" style="padding-bottom: 120px;"></p> <!-- Ensure text is readable -->
         </div>
 
-        <!-- Sticky Audio Controls at the Bottom -->
-        <div class="sticky-audio-controls">
+        <!-- Sticky Audio Controls at the Bottom (Hidden Initially) -->
+        <div id="sticky-audio-controls" class="sticky-audio-controls hidden">
             <p id="audio-loading" class="loading" style="display: none;">🔊 The narrator is getting ready...</p>
             <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
             <button id="moreInfoButton" onclick="requestMoreInfo('${artefact}', '${profile}')" class="audio-button" style="display: none;">📜 Tell Me More...</button>
@@ -308,7 +308,6 @@
             fetchOpenAITTS(artefact, profile);
         }
 
-
         function fetchOpenAITTS(artefact, profile) {
             let originalDescription = artefactDescriptions[artefact] || "No description available.";
 
@@ -316,7 +315,8 @@
             document.getElementById("artefact-description").innerText = "";
             document.getElementById("audio-loading").style.display = "none";
             document.getElementById("playPauseButton").style.display = "none";
-            document.getElementById("moreInfoButton").style.display = "none";  // Hide initially
+            document.getElementById("moreInfoButton").style.display = "none";
+            document.getElementById("sticky-audio-controls").classList.add("hidden");
 
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-description", {
                 method: "POST",
@@ -335,12 +335,17 @@
                         document.getElementById("artefact-description").innerText = data.response;
                     }
 
-                    // If user prefers audio, generate narration
+                    // Show the sticky controls with animation
+                    setTimeout(() => {
+                        document.getElementById("sticky-audio-controls").classList.remove("hidden");
+                        document.getElementById("sticky-audio-controls").classList.add("visible");
+                    }, 300);
+
                     if (deliveryPreference === "Auditory") {
-                        document.getElementById("audio-loading").style.display = "block";  // Show narrator loading
-                        requestTTS(data.response, true); // Pass 'true' to indicate initial adaptation TTS
+                        document.getElementById("audio-loading").style.display = "block";
+                        requestTTS(data.response, true);
                     } else {
-                        document.getElementById("moreInfoButton").style.display = "block"; // Show Tell Me More if not auditory
+                        document.getElementById("moreInfoButton").style.display = "block";
                     }
                 })
                 .catch(error => {
@@ -349,9 +354,15 @@
                     document.getElementById("artefact-description").innerText =
                         `The adaptation failed. However, here's the original artefact description:\n\n${originalDescription}`;
 
-                    document.getElementById("moreInfoButton").style.display = "block"; // Ensure Tell Me More is shown
+                    setTimeout(() => {
+                        document.getElementById("sticky-audio-controls").classList.remove("hidden");
+                        document.getElementById("sticky-audio-controls").classList.add("visible");
+                    }, 300);
+
+                    document.getElementById("moreInfoButton").style.display = "block";
                 });
         }
+
 
         function requestMoreInfo(artefact, profile) {
             if (!artefact || !profile || !participantId) {
