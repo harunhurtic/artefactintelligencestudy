@@ -53,7 +53,6 @@ const threadSchema = new mongoose.Schema({
     messages: [{ role: String, content: String, timestamp: Date }]
 });
 
-
 const Thread = mongoose.model("Thread", threadSchema);
 
 // Get correct directory paths for ES Modules
@@ -175,7 +174,6 @@ app.post("/fetch-description", async (req, res) => {
 
             if (status === "failed") {
                 console.error("❌ Assistant Run Failed:", checkRunData);
-                return res.status(500).json({ response: "Error: Assistant could not complete the request." });
             }
 
             if (status === "completed") {
@@ -191,7 +189,7 @@ app.post("/fetch-description", async (req, res) => {
 
                 if (!assistantMessage || !assistantMessage.content || !assistantMessage.content[0]) {
                     console.error("⚠️ No valid response from Assistant.");
-                    return res.status(500).json({ response: "Error: Assistant did not return a valid response." });
+                    return res.status(500).json({ response: `Adaptation failed. However, here's the original description:\n\n${originalDescription}` });
                 }
 
                 responseContent = assistantMessage.content[0].text.value;
@@ -200,14 +198,14 @@ app.post("/fetch-description", async (req, res) => {
         }
 
         if (!responseContent) {
-            responseContent = `Error: No valid response. Showing original description:\n\n${originalDescription}`;
+            responseContent = `Adaptation failed. However, here's the original description:\n\n${originalDescription}`;
         }
 
         res.json({ response: responseContent });
 
     } catch (error) {
         console.error("❌ Error with Assistant:", error);
-        res.status(500).json({ response: `Error: The adaptation failed. Here's the original description:\n\n${originalDescription}` });
+        res.status(500).json({ response: `Adaptation failed. However, here's the original description:\n\n${originalDescription}` });
     }
 });
 
