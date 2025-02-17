@@ -179,7 +179,7 @@ body {
     transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
 }
 
-/* Smoothly show the sticky bar when content is ready */
+/* Show sticky controls only when content is ready */
 .sticky-audio-controls.visible {
     transform: translateY(0);
     opacity: 1;
@@ -210,4 +210,10 @@ body {
     font-size: 1em;
     color: #2a1a5e;
     font-weight: bold;
+}
+
+/* Prevent text from being covered */
+.artefact-text {
+    padding-bottom: 120px;
+    /* Ensures description isn’t hidden */
 }

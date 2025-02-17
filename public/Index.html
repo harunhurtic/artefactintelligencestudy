@@ -294,7 +294,7 @@
         <div class="artefacts-container">
             <h2>${artefact}</h2>
             <p id="loading" class="loading">🔄 Adapting description...</p>
-            <p id="artefact-description" style="padding-bottom: 120px;"></p> <!-- Ensure text is readable -->
+            <p id="artefact-description" class="artefact-text"></p>
         </div>
 
         <!-- Sticky Audio Controls at the Bottom (Hidden Initially) -->
@@ -307,6 +307,7 @@
 
             fetchOpenAITTS(artefact, profile);
         }
+
 
         function fetchOpenAITTS(artefact, profile) {
             let originalDescription = artefactDescriptions[artefact] || "No description available.";
@@ -335,7 +336,7 @@
                         document.getElementById("artefact-description").innerText = data.response;
                     }
 
-                    // Show the sticky controls with animation
+                    // Show sticky controls after content is ready
                     setTimeout(() => {
                         document.getElementById("sticky-audio-controls").classList.remove("hidden");
                         document.getElementById("sticky-audio-controls").classList.add("visible");
@@ -363,7 +364,6 @@
                 });
         }
 
-
         function requestMoreInfo(artefact, profile) {
             if (!artefact || !profile || !participantId) {
                 console.error("❌ Missing required fields: artefact, profile, or participantId");
@@ -376,6 +376,10 @@
                 audio.currentTime = 0;
                 audio = null;
             }
+
+            // Hide sticky controls while fetching data
+            document.getElementById("sticky-audio-controls").classList.remove("visible");
+            document.getElementById("sticky-audio-controls").classList.add("hidden");
 
             // Get button elements
             const playButton = document.getElementById("playPauseButton");
@@ -398,21 +402,31 @@
                 .then(data => {
                     document.getElementById("artefact-description").innerText = data.response;
 
-                    // Ensure buttons only appear when everything is fully loaded
+                    // Re-show sticky controls after content loads
+                    setTimeout(() => {
+                        document.getElementById("sticky-audio-controls").classList.remove("hidden");
+                        document.getElementById("sticky-audio-controls").classList.add("visible");
+                    }, 300);
+
                     if (deliveryPreference === "Auditory") {
-                        loadingIndicator.style.display = "block"; // Show narrator loading
+                        loadingIndicator.style.display = "block";
                         requestTTS(data.response, true);
                     } else {
-                        // Buttons only reappear once fetching is 100% complete
                         moreInfoButton.style.display = "block";
                     }
                 })
                 .catch(error => {
                     console.error("❌ Error fetching more details:", error);
                     document.getElementById("artefact-description").innerText = "Failed to fetch additional information.";
-                    moreInfoButton.style.display = "block"; // Restore button in case of failure
+                    moreInfoButton.style.display = "block";
+
+                    setTimeout(() => {
+                        document.getElementById("sticky-audio-controls").classList.remove("hidden");
+                        document.getElementById("sticky-audio-controls").classList.add("visible");
+                    }, 300);
                 });
         }
+
 
         // Function to request TTS from server and buttons when loaded
         function requestTTS(text, isFromMoreInfo = false) {
