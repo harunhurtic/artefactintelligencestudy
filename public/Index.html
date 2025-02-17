@@ -133,78 +133,97 @@
             }
 
             quizContainer.innerHTML = `
-        <div class="artefacts-container">
-            <h1>Lillehammer Museum - Artefacts</h1>
-            <button id="clear-button" onclick="clearSelections()" style="font-size: 1.2em; padding: 10px;">Clear All Answers</button>
-        </div>
-        <h3 id="pleaseAnswerQuestionsText">Please Answer A Few Questions </h3>
-        <div id="quiz"></div>
-        <h3 id="result"></h3>
-    `;
+    <div class="card">
+        <h1 id="quiz-title">Welcome to Lillehammer Museum</h1>
+        <h3 id="pleaseAnswerQuestionsText">Please Answer The Following Questions</h3>
+    </div>
+    <div id="quiz"></div>
+    <h3 id="result"></h3>
+`;
 
-            const quizDiv = document.getElementById("quiz");
 
-            questions.forEach((q, index) => {
-                const questionDiv = document.createElement("div");
-                questionDiv.className = "card";
-                questionDiv.innerHTML = `<p>${q.text}</p>`;
-
-                q.options.forEach((option, optIndex) => {
-                    const button = document.createElement("button");
-                    button.className = "option-button";
-                    button.innerText = option.answer;
-                    button.onclick = () => selectAnswer(index, optIndex, button);
-
-                    // Restore previously selected answers
-                    if (userResponses[index] && userResponses[index].answer === option.answer) {
-                        button.classList.add("selected");
-                    }
-
-                    questionDiv.appendChild(button);
-                });
-
-                quizDiv.appendChild(questionDiv);
-            });
-
-            // Ensure the "Next" button appears if all questions were answered before
-            assignProfile();
+            renderQuestion(0); // Start the quiz with the first question
         }
 
-        function selectAnswer(questionIndex, optionIndex, button) {
+        function renderQuestion(questionIndex) {
+            const quizDiv = document.getElementById("quiz");
+            quizDiv.innerHTML = ""; // Clear previous question
+
+            if (questionIndex >= questions.length) {
+                assignProfile(); // Skip final message, go straight to artefacts
+                return;
+            }
+
+            const currentQuestion = questions[questionIndex];
+            const questionDiv = document.createElement("div");
+            questionDiv.className = "card";
+            questionDiv.innerHTML = `<p>${currentQuestion.text}</p>`;
+
+            const optionsContainer = document.createElement("div");
+            optionsContainer.className = "options-container";
+
+            let nextButtonCard = document.createElement("div");
+            nextButtonCard.className = "card"; // Separate card for the "Next Question" button
+            nextButtonCard.style.display = "none"; // Hidden until an answer is selected
+
+            let nextButton = document.createElement("button");
+            nextButton.className = "nav-button";
+            nextButton.innerText = "Next Question";
+            nextButton.onclick = () => renderQuestion(questionIndex + 1);
+            nextButtonCard.appendChild(nextButton);
+
+            currentQuestion.options.forEach((option, optIndex) => {
+                const button = document.createElement("button");
+                button.className = "option-button";
+                button.innerText = option.answer;
+                button.onclick = () => selectAnswer(questionIndex, optIndex, button, nextButtonCard);
+
+                optionsContainer.appendChild(button);
+            });
+
+            questionDiv.appendChild(optionsContainer);
+            quizDiv.appendChild(questionDiv);
+            quizDiv.appendChild(nextButtonCard); // Add the next button card (hidden initially)
+        }
+
+        function selectAnswer(questionIndex, optionIndex, selectedButton, nextButtonCard) {
             let selectedOption = questions[questionIndex].options[optionIndex];
 
-            // Allow deselection of the same button
+            // Toggle selection: If already selected, remove the answer
             if (userResponses[questionIndex] === selectedOption) {
-                delete userResponses[questionIndex];
-                button.classList.remove("selected");
-            } else {
-                userResponses[questionIndex] = selectedOption;
-                button.classList.add("selected");
+                delete userResponses[questionIndex]; // Remove answer
+                selectedButton.classList.remove("selected"); // Remove highlight
+
+                // Hide the "Next Question" card if no answer is selected
+                nextButtonCard.style.display = "none";
+                return;
             }
 
-            // Ensure other options in the same question are deselected
-            document.querySelectorAll(".card")[questionIndex].querySelectorAll(".option-button").forEach(btn => {
-                if (btn !== button) btn.classList.remove("selected");
-            });
+            // Store the selected answer
+            userResponses[questionIndex] = selectedOption;
 
-            // Update delivery preference correctly
+            // Update delivery preference if applicable
             if (selectedOption.delivery) {
                 deliveryPreference = selectedOption.delivery;
-                console.log(`✅ Delivery Preference Updated: ${deliveryPreference}`);  // Debugging
+                console.log(`✅ Delivery Preference Updated: ${deliveryPreference}`);
             }
 
-            checkCompletion();
+            // Remove "selected" class from all buttons in this question
+            const optionButtons = document.querySelectorAll(".option-button");
+            optionButtons.forEach(button => button.classList.remove("selected"));
+
+            // Add "selected" class to the clicked button
+            selectedButton.classList.add("selected");
+
+            // Show the "Next Question" card after selecting an answer
+            nextButtonCard.style.display = "block";
         }
 
-        function checkCompletion() {
-            let nextButtonCard = document.getElementById("nextButtonCard");
 
+
+        function checkCompletion() {
             if (Object.keys(userResponses).length === questions.length) {
                 assignProfile();
-            } else {
-                if (nextButtonCard) {
-                    nextButtonCard.remove(); // Hide "Next" button if all answers aren't selected
-                }
             }
         }
 
@@ -218,26 +237,10 @@
             });
 
             let assignedProfile = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
-            let deliveryMode = deliveryPreference === "Auditory" ? "Auditory" : "Text-Based";
 
-            document.getElementById("result").innerHTML = "";
-
-            let nextButtonCard = document.getElementById("nextButtonCard");
-
-            if (!nextButtonCard) {
-                nextButtonCard = document.createElement("div");
-                nextButtonCard.id = "nextButtonCard";
-                nextButtonCard.className = "card";
-                nextButtonCard.innerHTML = `
-            <p>Thank you for your answers. The experience will now be personalized for you.</p>
-            <button id="nextButton" class="nav-button">Next</button>
-        `;
-
-                document.getElementById("quiz").appendChild(nextButtonCard);
-
-                document.getElementById("nextButton").addEventListener("click", () => showArtefacts(assignedProfile));
-            }
+            showArtefacts(assignedProfile); // Skip final message and go straight to artefacts
         }
+
 
         function clearSelections() {
             userResponses = {}; // Clear all stored responses
