@@ -154,7 +154,7 @@
                     button.innerText = option.answer;
                     button.onclick = () => selectAnswer(index, optIndex, button);
 
-                    // ✅ Restore previously selected answers
+                    // Restore previously selected answers
                     if (userResponses[index] && userResponses[index].answer === option.answer) {
                         button.classList.add("selected");
                     }
@@ -183,7 +183,7 @@
                 if (btn !== button) btn.classList.remove("selected");
             });
 
-            // ✅ Update delivery preference correctly
+            // Update delivery preference correctly
             if (selectedOption.delivery) {
                 deliveryPreference = selectedOption.delivery;
                 console.log(`✅ Delivery Preference Updated: ${deliveryPreference}`);  // Debugging
@@ -311,7 +311,7 @@
             document.getElementById("artefact-description").innerText = "";
             document.getElementById("audio-loading").style.display = "none";
             document.getElementById("playPauseButton").style.display = "none";
-            document.getElementById("moreInfoButton").style.display = "none";  // ✅ Hide initially
+            document.getElementById("moreInfoButton").style.display = "none";  // Hide initially
 
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-description", {
                 method: "POST",
@@ -330,12 +330,12 @@
                         document.getElementById("artefact-description").innerText = data.response;
                     }
 
-                    // ✅ If user prefers audio, generate narration
+                    // If user prefers audio, generate narration
                     if (deliveryPreference === "Auditory") {
                         document.getElementById("audio-loading").style.display = "block";  // Show narrator loading
-                        requestTTS(data.response, true); // ✅ Pass 'true' to indicate initial adaptation TTS
+                        requestTTS(data.response, true); // Pass 'true' to indicate initial adaptation TTS
                     } else {
-                        document.getElementById("moreInfoButton").style.display = "block"; // ✅ Show Tell Me More if not auditory
+                        document.getElementById("moreInfoButton").style.display = "block"; // Show Tell Me More if not auditory
                     }
                 })
                 .catch(error => {
@@ -344,7 +344,7 @@
                     document.getElementById("artefact-description").innerText =
                         `The adaptation failed. However, here's the original artefact description:\n\n${originalDescription}`;
 
-                    document.getElementById("moreInfoButton").style.display = "block"; // ✅ Ensure Tell Me More is shown
+                    document.getElementById("moreInfoButton").style.display = "block"; // Ensure Tell Me More is shown
                 });
         }
 
@@ -366,7 +366,7 @@
             const moreInfoButton = document.getElementById("moreInfoButton");
             const loadingIndicator = document.getElementById("audio-loading");
 
-            // ✅ Hide all buttons immediately
+            // Hide all buttons immediately
             playButton.style.display = "none";
             moreInfoButton.style.display = "none";
             loadingIndicator.style.display = "none";
@@ -382,12 +382,12 @@
                 .then(data => {
                     document.getElementById("artefact-description").innerText = data.response;
 
-                    // ✅ Ensure buttons only appear when everything is fully loaded
+                    // Ensure buttons only appear when everything is fully loaded
                     if (deliveryPreference === "Auditory") {
                         loadingIndicator.style.display = "block"; // Show narrator loading
                         requestTTS(data.response, true);
                     } else {
-                        // ✅ Buttons only reappear once fetching is 100% complete
+                        // Buttons only reappear once fetching is 100% complete
                         moreInfoButton.style.display = "block";
                     }
                 })
@@ -398,9 +398,7 @@
                 });
         }
 
-
-
-        // ✅ Function to request TTS from server and buttons when loaded
+        // Function to request TTS from server and buttons when loaded
         function requestTTS(text, isFromMoreInfo = false) {
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-tts", {
                 method: "POST",
@@ -433,13 +431,19 @@
                         loadingIndicator.style.display = "none";
                         playButton.innerText = "🔊 Listen To Narration";
 
-                        // ✅ Show "Tell Me More" button only after narration loads (if applicable)
+                        // ✅ Ensure "Tell Me More" button only appears after narration loads
                         if (isFromMoreInfo) {
                             moreInfoButton.style.display = "block";
                         }
                     });
 
-                    // ✅ No autoplay! User must manually click play button
+                    // ✅ Fix for mobile browsers: Ensure user interaction is needed before playing
+                    document.addEventListener("click", () => {
+                        audio.play().catch(() => {
+                            console.warn("⚠️ Audio blocked by mobile browser. Requires user interaction.");
+                        });
+                    }, { once: true });
+
                     playButton.onclick = () => toggleAudio();
                     audio.onended = () => {
                         playButton.innerText = "🔊 Listen To Narration";
@@ -517,7 +521,7 @@
                 <button onclick="showArtefacts(getAssignedProfile())" class="nav-button">➡️ Continue to Artefacts</button>
     `;
 
-            renderQuiz(); // ✅ Re-render the quiz and restore previous selections
+            renderQuiz(); // Re-render the questionnaire and restore previous selections
         }
 
         window.onload = renderParticipantScreen;
