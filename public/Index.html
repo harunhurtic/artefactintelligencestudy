@@ -120,8 +120,9 @@
             }
 
             console.log(`✅ Participant ID set: ${participantId}`); // Log the ID for debugging
-            renderQuiz();  // Proceed to the questionnaire
+            renderQuiz();  // Proceed to the quiz
         }
+
 
         function renderQuiz() {
             let quizContainer = document.getElementById("quiz-container");
@@ -168,7 +169,6 @@
             // Ensure the "Next" button appears if all questions were answered before
             assignProfile();
         }
-
 
         function selectAnswer(questionIndex, optionIndex, button) {
             let selectedOption = questions[questionIndex].options[optionIndex];
@@ -291,24 +291,20 @@
             <button onclick="showArtefacts('${profile}')" class="back-button">⬅️ Back to Artefacts</button>
         </div>
 
-        <!-- Narrator Loading and Audio Card (Hidden by Default) -->
-        <div id="audio-card" class="card" style="display: none;">
-            <p id="audio-loading" class="loading">🔊 The narrator is getting ready...</p>
-            <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
-        </div>
-
-        <!-- Artefact Description Card -->
-        <div class="card">
+        <div class="artefacts-container">
             <h2>${artefact}</h2>
             <p id="loading" class="loading">🔄 Adapting description...</p>
             <p id="artefact-description"></p>
-            <button id="moreInfoButton" onclick="requestMoreInfo('${artefact}', '${profile}')" class="audio-button" style="display: none;">📜 Tell Me More...</button>
+            <p id="audio-loading" class="loading" style="display: none;">🔊 The narrator is getting ready...</p>
+            <div class="audio-container">
+                <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
+                <button id="moreInfoButton" onclick="requestMoreInfo('${artefact}', '${profile}')" class="audio-button" style="display: none;">📜 Tell Me More...</button>
+            </div>
         </div>
     `;
 
             fetchOpenAITTS(artefact, profile);
         }
-
 
         function fetchOpenAITTS(artefact, profile) {
             let originalDescription = artefactDescriptions[artefact] || "No description available.";
@@ -379,7 +375,7 @@
             moreInfoButton.style.display = "none";
             loadingIndicator.style.display = "none";
 
-            document.getElementById("artefact-description").innerHTML = `<span class="loading">🔄 Getting additional information...</span>`;
+            document.getElementById("artefact-description").innerHTML = `<span class="loading">🔄 Getting more details...</span>`;
 
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-more-info", {
                 method: "POST",
@@ -401,7 +397,7 @@
                 })
                 .catch(error => {
                     console.error("❌ Error fetching more details:", error);
-                    document.getElementById("artefact-description").innerText = "Failed to get additional information.";
+                    document.getElementById("artefact-description").innerText = "Failed to fetch additional information.";
                     moreInfoButton.style.display = "block"; // Restore button in case of failure
                 });
         }
@@ -431,15 +427,13 @@
 
                     audio = new Audio(audioURL);
 
-                    let audioCard = document.getElementById("audio-card");
                     let playButton = document.getElementById("playPauseButton");
                     let loadingIndicator = document.getElementById("audio-loading");
                     let moreInfoButton = document.getElementById("moreInfoButton");
 
-                    // 🚀 Make the entire audio card visible when the loading message appears
-                    audioCard.style.display = "block";
-                    loadingIndicator.style.display = "block";
+                    // Hide buttons while waiting for audio
                     playButton.style.display = "none";
+                    loadingIndicator.style.display = "block";
                     moreInfoButton.style.display = "none";
 
                     // Clear previous timeout if new request is made
@@ -478,7 +472,7 @@
                 .catch(error => {
                     console.error("❌ Error fetching TTS:", error);
                     document.getElementById("audio-loading").style.display = "none";
-                    document.getElementById("artefact-description").innerText = "Narrator failed to load. Please try again.";
+                    alert("Audio failed to load. Please try again.");
                 });
         }
 
