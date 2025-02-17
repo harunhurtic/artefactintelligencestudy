@@ -225,7 +225,7 @@
                 nextButtonCard.id = "nextButtonCard";
                 nextButtonCard.className = "card";
                 nextButtonCard.innerHTML = `
-            <p>Thanks for your answers. The experience will now be personalized for you.</p>
+            <p>Thank you for your answers. The experience will now be personalized for you.</p>
             <button id="nextButton" class="nav-button">Next</button>
         `;
 
@@ -383,24 +383,20 @@
                     document.getElementById("artefact-description").innerText = data.response;
 
                     // ✅ Ensure buttons only appear when everything is ready
-                    setTimeout(() => {
-                        if (deliveryPreference === "Auditory") {
-                            loadingIndicator.style.display = "block"; // Show narrator loading
-                            playButton.innerText = "🔊 Listen To Narration";
-                            requestTTS(data.response, true); // ✅ Wait for TTS before showing buttons
-                        } else {
-                            loadingIndicator.style.display = "none";
-                            playButton.style.display = "none";
-                            moreInfoButton.style.display = "block";
-                        }
-                    }, 500);
+                    if (deliveryPreference === "Auditory") {
+                        loadingIndicator.style.display = "block"; // Show narrator loading
+                        requestTTS(data.response, true);
+                    } else {
+                        moreInfoButton.style.display = "block";
+                    }
                 })
                 .catch(error => {
                     console.error("❌ Error fetching more details:", error);
                     document.getElementById("artefact-description").innerText = "Failed to fetch additional information.";
-                    moreInfoButton.style.display = "block";
+                    moreInfoButton.style.display = "block"; // Restore button in case of failure
                 });
         }
+
 
         // ✅ Function to request TTS from server and buttons when loaded
         function requestTTS(text, isFromMoreInfo = false) {
@@ -430,44 +426,17 @@
                     moreInfoButton.style.display = "none";
 
                     audio.addEventListener("canplaythrough", () => {
-                        setTimeout(() => {
-                            playButton.style.display = "block";
-                            loadingIndicator.style.display = "none";
-                            playButton.innerText = "🔊 Listen To Narration";
-
-                            // ✅ Only restore "Tell Me More" **after narration is loaded**
-                            if (isFromMoreInfo) {
-                                moreInfoButton.style.display = "block";
-                            }
-                        }, 300);
-                    });
-
-                    let checkAudioReady = setInterval(() => {
-                        if (audio.readyState >= 2) {
-                            playButton.style.display = "block";
-                            loadingIndicator.style.display = "none";
-                            clearInterval(checkAudioReady);
-                            playButton.innerText = "🔊 Listen To Narration";
-
-                            if (isFromMoreInfo) {
-                                moreInfoButton.style.display = "block";
-                            }
-                        }
-                    }, 1000);
-
-                    setTimeout(() => {
                         playButton.style.display = "block";
                         loadingIndicator.style.display = "none";
-                        clearInterval(checkAudioReady);
                         playButton.innerText = "🔊 Listen To Narration";
 
+                        // ✅ Only restore "Tell Me More" **after narration is loaded**
                         if (isFromMoreInfo) {
                             moreInfoButton.style.display = "block";
                         }
-                    }, 5000);
+                    });
 
                     playButton.onclick = () => toggleAudio();
-
                     audio.onended = () => {
                         playButton.innerText = "🔊 Listen To Narration";
                     };
@@ -477,7 +446,6 @@
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
-
 
 
         async function playTTS(text) {
