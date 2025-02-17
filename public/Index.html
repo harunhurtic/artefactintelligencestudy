@@ -362,8 +362,14 @@
             }
 
             // Hide buttons while loading new information
-            document.getElementById("playPauseButton").style.display = "none";
-            document.getElementById("moreInfoButton").style.display = "none";
+            let playButton = document.getElementById("playPauseButton");
+            let moreInfoButton = document.getElementById("moreInfoButton");
+            let loadingIndicator = document.getElementById("audio-loading");
+
+            playButton.style.display = "none";
+            moreInfoButton.style.display = "none";
+            loadingIndicator.style.display = "none"; // Hide narration loading initially
+
             document.getElementById("artefact-description").innerHTML = `<span class="loading">🔄 Getting more details...</span>`;
 
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-more-info", {
@@ -375,30 +381,31 @@
                 .then(data => {
                     document.getElementById("artefact-description").innerText = data.response;
 
-                    // Restore the "Tell Me More" button
-                    document.getElementById("moreInfoButton").style.display = "block";
-
                     if (deliveryPreference === "Auditory") {
                         // Indicate that narration is being prepared
-                        document.getElementById("audio-loading").style.display = "block";
+                        loadingIndicator.style.display = "block";
+
+                        // Ensure play button starts in reset state
+                        playButton.innerText = "🔊 Listen To Narration";
 
                         // Generate new narration TTS
                         requestTTS(data.response);
                     } else {
                         // Ensure audio-related elements stay hidden for text-based users
-                        document.getElementById("audio-loading").style.display = "none";
-                        document.getElementById("playPauseButton").style.display = "none";
+                        loadingIndicator.style.display = "none";
+                        playButton.style.display = "none";
+                        moreInfoButton.style.display = "block"; // Show button again for text users
                     }
                 })
                 .catch(error => {
                     console.error("❌ Error fetching more details:", error);
                     document.getElementById("artefact-description").innerText = "Failed to fetch additional information.";
-                    document.getElementById("moreInfoButton").style.display = "block"; // Restore button
+                    moreInfoButton.style.display = "block"; // Restore button
                 });
         }
 
         // ✅ Function to request TTS from server and buttons when loaded
-        function requestTTS(text, isFirstAdaptation = false) {
+        function requestTTS(text) {
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-tts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -417,20 +424,22 @@
 
                     let playButton = document.getElementById("playPauseButton");
                     let loadingIndicator = document.getElementById("audio-loading");
+                    let moreInfoButton = document.getElementById("moreInfoButton");
 
                     // Hide buttons while loading new narration
                     playButton.style.display = "none";
                     loadingIndicator.style.display = "block";
-                    document.getElementById("moreInfoButton").style.display = "none";
+                    moreInfoButton.style.display = "none";
 
                     audio.addEventListener("canplaythrough", () => {
                         playButton.style.display = "block";
                         loadingIndicator.style.display = "none";
 
-                        // Restore "Tell Me More" after audio is ready
-                        if (isFirstAdaptation) {
-                            document.getElementById("moreInfoButton").style.display = "block";
-                        }
+                        // Ensure play button is reset properly
+                        playButton.innerText = "🔊 Listen To Narration";
+
+                        // Restore "Tell Me More" button AFTER audio is fully ready
+                        moreInfoButton.style.display = "block";
                     });
 
                     let checkAudioReady = setInterval(() => {
@@ -439,10 +448,11 @@
                             loadingIndicator.style.display = "none";
                             clearInterval(checkAudioReady);
 
-                            // Restore "Tell Me More" button only when audio is ready
-                            if (isFirstAdaptation) {
-                                document.getElementById("moreInfoButton").style.display = "block";
-                            }
+                            // Ensure play button is reset properly
+                            playButton.innerText = "🔊 Listen To Narration";
+
+                            // Restore "Tell Me More" only when audio is fully ready
+                            moreInfoButton.style.display = "block";
                         }
                     }, 1000);
 
@@ -451,10 +461,11 @@
                         loadingIndicator.style.display = "none";
                         clearInterval(checkAudioReady);
 
-                        // Ensure "Tell Me More" is enabled even if delayed
-                        if (isFirstAdaptation) {
-                            document.getElementById("moreInfoButton").style.display = "block";
-                        }
+                        // Ensure play button is reset properly
+                        playButton.innerText = "🔊 Listen To Narration";
+
+                        // Restore "Tell Me More" if delayed
+                        moreInfoButton.style.display = "block";
                     }, 5000);
 
                     playButton.onclick = () => toggleAudio();
@@ -468,9 +479,6 @@
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
-
-
-
 
         async function playTTS(text) {
             try {
