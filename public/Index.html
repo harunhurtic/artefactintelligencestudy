@@ -20,6 +20,7 @@
         let deliveryPreference = "Text-Based";
         let audio = null;
         let participantId = "";  // Store participant ID
+        let audioLoadTimeout = null;  // Global timeout tracker
 
         const questions = [
             {
@@ -400,13 +401,20 @@
 
         // Function to request TTS from server and buttons when loaded
         function requestTTS(text, isFromMoreInfo = false) {
+            console.log(`🟡 Sending TTS request (More Info: ${isFromMoreInfo})...`);
+
             fetch("https://artefactintelligenceapp.up.railway.app/fetch-tts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ text }),
             })
-                .then(response => response.blob())
+                .then(response => {
+                    console.log("🟢 Response received. Checking if valid...");
+                    if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
+                    return response.blob();
+                })
                 .then(audioBlob => {
+                    console.log("✅ Audio file received. Creating URL...");
                     let audioURL = URL.createObjectURL(audioBlob);
 
                     if (audio) {
@@ -420,13 +428,17 @@
                     let loadingIndicator = document.getElementById("audio-loading");
                     let moreInfoButton = document.getElementById("moreInfoButton");
 
-                    // Hide buttons while waiting for audio to load
+                    // Hide buttons while waiting for audio
                     playButton.style.display = "none";
                     loadingIndicator.style.display = "block";
                     moreInfoButton.style.display = "none";
 
-                    // ✅ Use "loadeddata" instead of "canplaythrough" to avoid indefinite loading on mobile
+                    // Clear previous timeout if new request is made
+                    if (audioLoadTimeout) clearTimeout(audioLoadTimeout);
+
+                    // Show play button when audio is ready
                     audio.addEventListener("loadeddata", () => {
+                        console.log("✅ Audio loaded successfully!");
                         playButton.style.display = "block";
                         loadingIndicator.style.display = "none";
                         playButton.innerText = "🔊 Listen To Narration";
@@ -436,6 +448,19 @@
                         }
                     });
 
+                    // Timeout fallback if mobile delays "loadeddata"
+                    audioLoadTimeout = setTimeout(() => {
+                        if (playButton.style.display === "none") {
+                            console.error("⛔ Audio still not loading after 5s. Showing button anyway.");
+                            playButton.style.display = "block"; // Force show button if needed
+                            loadingIndicator.style.display = "none";
+
+                            if (isFromMoreInfo) {
+                                moreInfoButton.style.display = "block";
+                            }
+                        }
+                    }, 5000);
+
                     playButton.onclick = () => toggleAudio();
                     audio.onended = () => {
                         playButton.innerText = "🔊 Listen To Narration";
@@ -444,6 +469,7 @@
                 .catch(error => {
                     console.error("❌ Error fetching TTS:", error);
                     document.getElementById("audio-loading").style.display = "none";
+                    alert("Audio failed to load. Please try again.");
                 });
         }
 
