@@ -75,7 +75,7 @@
                 ]
             },
             {
-                text: "How do you feel after a museum visit? (7/7)", options: [
+                text: "How do you usually feel after a museum visit? (7/7)", options: [
                     { answer: "Excited about what I discovered and eager to learn more.", score: 5, profile: "Explorer" },
                     { answer: "Happy that my group enjoyed it and learned something.", score: 7, profile: "Facilitator" },
                     { answer: "Inspired to apply what I saw to my work or hobbies.", score: 3, profile: "Professional/Hobbyist" },
@@ -354,14 +354,14 @@
                 return;
             }
 
-            // Stop audio from previous adaptation if applicable
+            // Stop any ongoing audio
             if (audio) {
                 audio.pause();
                 audio.currentTime = 0;
                 audio = null;
             }
 
-            // Hide buttons while loading
+            // Hide buttons while loading new information
             document.getElementById("playPauseButton").style.display = "none";
             document.getElementById("moreInfoButton").style.display = "none";
             document.getElementById("artefact-description").innerHTML = `<span class="loading">🔄 Getting more details...</span>`;
@@ -375,12 +375,14 @@
                 .then(data => {
                     document.getElementById("artefact-description").innerText = data.response;
 
-                    // Show "Tell Me More" button again after fetching
+                    // Restore the "Tell Me More" button
                     document.getElementById("moreInfoButton").style.display = "block";
 
-                    // If Auditory mode is selected, generate TTS **AFTER** displaying text
                     if (deliveryPreference === "Auditory") {
+                        // Indicate that narration is being prepared
                         document.getElementById("audio-loading").style.display = "block";
+
+                        // Generate new narration TTS
                         requestTTS(data.response);
                     } else {
                         // Ensure audio-related elements stay hidden for text-based users
@@ -391,7 +393,7 @@
                 .catch(error => {
                     console.error("❌ Error fetching more details:", error);
                     document.getElementById("artefact-description").innerText = "Failed to fetch additional information.";
-                    document.getElementById("moreInfoButton").style.display = "block"; // Show button again
+                    document.getElementById("moreInfoButton").style.display = "block"; // Restore button
                 });
         }
 
@@ -416,16 +418,16 @@
                     let playButton = document.getElementById("playPauseButton");
                     let loadingIndicator = document.getElementById("audio-loading");
 
-                    // Hide buttons while loading
+                    // Hide buttons while loading new narration
                     playButton.style.display = "none";
                     loadingIndicator.style.display = "block";
-                    document.getElementById("moreInfoButton").style.display = "none"; // Ensure "Tell Me More" stays hidden
+                    document.getElementById("moreInfoButton").style.display = "none";
 
                     audio.addEventListener("canplaythrough", () => {
                         playButton.style.display = "block";
                         loadingIndicator.style.display = "none";
 
-                        // Only show "Tell Me More" after audio is ready (if it's the first time)
+                        // Restore "Tell Me More" after audio is ready
                         if (isFirstAdaptation) {
                             document.getElementById("moreInfoButton").style.display = "block";
                         }
@@ -437,7 +439,7 @@
                             loadingIndicator.style.display = "none";
                             clearInterval(checkAudioReady);
 
-                            // Ensure "Tell Me More" is enabled only when audio is ready
+                            // Restore "Tell Me More" button only when audio is ready
                             if (isFirstAdaptation) {
                                 document.getElementById("moreInfoButton").style.display = "block";
                             }
@@ -460,13 +462,13 @@
                     audio.onended = () => {
                         playButton.innerText = "🔊 Listen To Narration";
                     };
-
                 })
                 .catch(error => {
                     console.error("❌ Error fetching TTS:", error);
                     document.getElementById("audio-loading").style.display = "none";
                 });
         }
+
 
 
 
@@ -510,18 +512,20 @@
         }
 
         function toggleAudio() {
-            if (!audio) return; // Ensure audio exists
+            if (!audio) return;
+
+            let playButton = document.getElementById("playPauseButton");
 
             if (audio.paused) {
                 audio.play().then(() => {
                     console.log("✅ Audio started.");
-                    document.getElementById("playPauseButton").innerText = "⏸ Pause Narration";
+                    playButton.innerText = "⏸ Pause Narration";
                 }).catch(error => {
                     console.warn("⚠️ Audio play blocked, user interaction required.", error);
                 });
             } else {
                 audio.pause();
-                document.getElementById("playPauseButton").innerText = "▶️ Continue Narration";
+                playButton.innerText = "▶️ Continue Narration";
             }
         }
 
