@@ -436,10 +436,10 @@
                     let loadingIndicator = document.getElementById("audio-loading");
                     let moreInfoButton = document.getElementById("moreInfoButton");
 
-                    // Show the audio card when loading starts
+                    // 🚀 Make the entire audio card visible when the loading message appears
                     audioCard.style.display = "block";
-                    playButton.style.display = "none";
                     loadingIndicator.style.display = "block";
+                    playButton.style.display = "none";
                     moreInfoButton.style.display = "none";
 
                     // Clear previous timeout if new request is made
@@ -481,7 +481,6 @@
                     document.getElementById("artefact-description").innerText = "Narrator failed to load. Please try again.";
                 });
         }
-
 
         async function playTTS(text) {
             try {
