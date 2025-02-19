@@ -13,7 +13,7 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors({
-    origin: "https://artefactintelligencestudy.up.railway.app",  // 🔄 Replace with your frontend URL
+    origin: "https://https://artefactintelligencestudy.hurtic.net",  // 🔄 Replace with your frontend URL
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
