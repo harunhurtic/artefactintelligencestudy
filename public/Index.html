@@ -322,7 +322,7 @@
             document.getElementById("moreInfoButton").style.display = "none";
             document.getElementById("sticky-audio-controls").classList.add("hidden");
 
-            fetch("https://https://artefactintelligencestudy.hurtic.net/fetch-description", {
+            fetch("https://artefactintelligencestudy.hurtic.net/fetch-description", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ artefact, originalDescription, profile, participantId }),
@@ -396,7 +396,7 @@
 
             document.getElementById("artefact-description").innerHTML = `<span class="loading">🔄 Getting more details...</span>`;
 
-            fetch("https://https://artefactintelligencestudy.hurtic.net/fetch-more-info", {
+            fetch("https://artefactintelligencestudy.hurtic.net/fetch-more-info", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ artefact, profile, participantId }),
@@ -435,7 +435,7 @@
         function requestTTS(text, isFromMoreInfo = false) {
             console.log(`🟡 Sending TTS request (More Info: ${isFromMoreInfo})...`);
 
-            fetch("https://https://artefactintelligencestudy.hurtic.net/fetch-tts", {
+            fetch("https://artefactintelligencestudy.hurtic.net/fetch-tts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ text }),
@@ -507,7 +507,7 @@
 
         async function playTTS(text) {
             try {
-                let audioResponse = await fetch("https://https://artefactintelligencestudy.hurtic.net/fetch-tts", {
+                let audioResponse = await fetch("https://artefactintelligencestudy.hurtic.net/fetch-tts", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ text }),
