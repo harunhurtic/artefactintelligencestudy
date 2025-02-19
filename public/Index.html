@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lillehammer Museum - Artefacts</title>
+    <title>Lillehammer Museum</title>
     <link rel="stylesheet" href="styling.css">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -21,6 +21,7 @@
         let audio = null;
         let participantId = "";  // Store participant ID
         let audioLoadTimeout = null;  // Global timeout tracker
+        let controlsExpanded = true;  // Track expand/collapse state
 
         const questions = [
             {
@@ -102,8 +103,8 @@
 
             quizContainer.innerHTML = `
         <div class="artefacts-container">
-            <h1>Welcome to Lillehammer Museum</h1>
-            <h3>Please enter your Participant ID to continue</h3>
+            <h1>Welcome to Lillehammer Museum 🏛️ </h1>
+            <h3>Enter the Participant ID to continue</h3>
             <input type="text" id="participant-input" placeholder="Enter Participant ID" style="font-size: 1.2em; padding: 10px; margin: 10px;">
             <button onclick="submitParticipantId()" class="nav-button">Start</button>
         </div>
@@ -123,7 +124,6 @@
             renderQuiz();  // Proceed to the quiz
         }
 
-
         function renderQuiz() {
             let quizContainer = document.getElementById("quiz-container");
 
@@ -134,13 +134,12 @@
 
             quizContainer.innerHTML = `
     <div class="card">
-        <h1 id="quiz-title">Welcome to Lillehammer Museum</h1>
-        <h3 id="pleaseAnswerQuestionsText">Please Answer The Following Questions</h3>
+        <h1 id="quiz-title">Welcome to Lillehammer Museum 🏛️ </h1>
+        <h3 id="pleaseAnswerQuestionsText">Please take a moment to answer a few questions so we can personalize your museum experience ✨</h3>
     </div>
     <div id="quiz"></div>
     <h3 id="result"></h3>
 `;
-
 
             renderQuestion(0); // Start the quiz with the first question
         }
@@ -167,7 +166,7 @@
             nextButtonCard.style.display = "none"; // Hidden until an answer is selected
 
             let nextButton = document.createElement("button");
-            nextButton.className = "nav-button";
+            nextButton.className = "next-button";
             nextButton.innerText = "Next Question";
             nextButton.onclick = () => renderQuestion(questionIndex + 1);
             nextButtonCard.appendChild(nextButton);
@@ -218,8 +217,6 @@
             // Show the "Next Question" card after selecting an answer
             nextButtonCard.style.display = "block";
         }
-
-
 
         function checkCompletion() {
             if (Object.keys(userResponses).length === questions.length) {
@@ -302,10 +299,12 @@
 
         <!-- Sticky Audio Controls at the Bottom (Hidden Initially) -->
         <div id="sticky-audio-controls" class="sticky-audio-controls hidden">
-            <p id="audio-loading" class="loading" style="display: none;">🔊 The narrator is getting ready...</p>
-            <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
-            <button id="moreInfoButton" onclick="requestMoreInfo('${artefact}', '${profile}')" class="audio-button" style="display: none;">📜 Tell Me More...</button>
-        </div>
+    <button id="toggle-controls" onclick="toggleStickyControls()">⬇️</button>
+    <p id="audio-loading" class="loading" style="display: none;">🔊 The narrator is getting ready...</p>
+    <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
+    <button id="moreInfoButton" onclick="requestMoreInfo('${artefact}', '${profile}')" class="audio-button" style="display: none;">📜 Tell Me More...</button>
+</div>
+
     `;
 
             fetchOpenAITTS(artefact, profile);
@@ -322,7 +321,7 @@
             document.getElementById("moreInfoButton").style.display = "none";
             document.getElementById("sticky-audio-controls").classList.add("hidden");
 
-            fetch("https://artefactintelligencestudy.hurtic.net/fetch-description", {
+            fetch("http://localhost:8000/fetch-description", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ artefact, originalDescription, profile, participantId }),
@@ -396,7 +395,7 @@
 
             document.getElementById("artefact-description").innerHTML = `<span class="loading">🔄 Getting more details...</span>`;
 
-            fetch("https://artefactintelligencestudy.hurtic.net/fetch-more-info", {
+            fetch("http://localhost:8000/fetch-more-info", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ artefact, profile, participantId }),
@@ -435,7 +434,7 @@
         function requestTTS(text, isFromMoreInfo = false) {
             console.log(`🟡 Sending TTS request (More Info: ${isFromMoreInfo})...`);
 
-            fetch("https://artefactintelligencestudy.hurtic.net/fetch-tts", {
+            fetch("http://localhost:8000/fetch-tts", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ text }),
@@ -507,7 +506,7 @@
 
         async function playTTS(text) {
             try {
-                let audioResponse = await fetch("https://artefactintelligencestudy.hurtic.net/fetch-tts", {
+                let audioResponse = await fetch('BASE_URL/fetch-tts', {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ text }),
@@ -560,6 +559,23 @@
                 audio.pause();
                 playButton.innerText = "▶️ Continue Narration";
             }
+        }
+
+        function toggleStickyControls() {
+            const stickyControls = document.getElementById('sticky-audio-controls');
+            const toggleButton = document.getElementById('toggle-controls');
+
+            if (controlsExpanded) {
+                // Collapse sticky controls
+                stickyControls.classList.add('collapsed');
+                toggleButton.innerText = '⬆️';  // Change to up arrow
+            } else {
+                // Expand sticky controls
+                stickyControls.classList.remove('collapsed');
+                toggleButton.innerText = '⬇️';  // Change to down arrow
+            }
+
+            controlsExpanded = !controlsExpanded;
         }
 
 
