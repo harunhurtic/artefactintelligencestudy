@@ -12,16 +12,21 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors({
-    origin: "https://artefactintelligencestudy.hurtic.net",  // 🔄 Replace with your frontend URL
+
+/* Un-comment out this part if you want to run the app locally */
+app.use(cors());
+
+/* Comment out this whole "app.use" part out if you want to run the app locally (and replace all urls in front of /fetch in Index.html), and then un-comment the "app.use(cors());" above it. */
+/*app.use(cors({
+    origin: "https://artefactintelligencestudy.hurtic.net",  // 🔄 Replace url with your frontend URL
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"]
-}));
+}));*/
 
 const OPENAI_HEADERS = {
     "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
     "Content-Type": "application/json",
-    "OpenAI-Beta": "assistants=v2"  // ✅ Required for Assistants API v2
+    "OpenAI-Beta": "assistants=v2"  // Required for Assistants API v2
 };
 
 // Connect to MongoDB
@@ -80,7 +85,7 @@ app.post("/fetch-description", async (req, res) => {
         return res.status(400).json({ error: "Missing artefact, profile, or participantId" });
     }
 
-    let prompt = `Adapt the following artefact description and make it more engaging for a museum visitor with the ${profile} profile while preserving factual accuracy. Ensure the adaptation is a seamless museum description that aligns with their preferences, interests and motivations, without explicitly mentioning their profile or adding unnecessary details: \n Artefact: ${artefact}\n Description: ${originalDescription}`;
+    let prompt = `Adapt the following artefact description and make it more engaging for a museum visitor with the ${profile} profile while preserving factual accuracy. Ensure the adaptation is a seamless museum description that aligns with their preferences, interests, and motivations, without explicitly mentioning their profile or adding unnecessary details. Artefact: ${artefact}. Description: ${originalDescription}`;
 
     try {
         let thread = await Thread.findOne({ participantId });
@@ -105,7 +110,10 @@ app.post("/fetch-description", async (req, res) => {
             thread = new Thread({
                 threadId: threadData.id,
                 participantId,
+                profile,
                 createdAt: new Date(),
+                artefact,
+                originalDescription,
                 messages: []
             });
 
@@ -130,6 +138,15 @@ app.post("/fetch-description", async (req, res) => {
             console.error("❌ Failed to add message.");
             return res.status(500).json({ response: "Error: Could not send prompt to assistant." });
         }
+
+        // Store the prompt in the database
+        thread.messages.push({
+            role: "user",
+            content: prompt,
+            timestamp: new Date()
+        });
+
+        await thread.save();
 
         console.log("▶️ Running Assistant...");
         const runResponse = await fetch(`https://api.openai.com/v1/threads/${thread.threadId}/runs`, {
@@ -193,6 +210,16 @@ app.post("/fetch-description", async (req, res) => {
                 }
 
                 responseContent = assistantMessage.content[0].text.value;
+
+                // Save assistant's response into the thread
+                thread.messages.push({
+                    role: "assistant",
+                    content: responseContent,
+                    timestamp: new Date()
+                });
+
+                await thread.save();
+                console.log("✅ Assistant response saved to thread.");
                 break;
             }
         }
@@ -208,9 +235,6 @@ app.post("/fetch-description", async (req, res) => {
         res.status(500).json({ response: `Adaptation failed. However, here's the original description:\n\n${originalDescription}` });
     }
 });
-
-
-
 
 // API route for fetching additional artefact details (for "Tell Me More" button)
 app.post("/fetch-more-info", async (req, res) => {
@@ -234,9 +258,21 @@ app.post("/fetch-more-info", async (req, res) => {
         let threadId = thread.threadId;
         console.log(`✅ Found existing thread: ${threadId}`);
 
-        let prompt = `The visitor with the "${profile}" profile wants to learn more about the "${artefact}". Provide additional information.`;
+        let prompt = `The visitor with the "${profile}" profile wants to learn more about the "${artefact}" artefact. Follow your system instructions while only providing additional information that you previously haven't provided. If there’s not much info left to provide, explain that to the visitor.`;
 
         console.log(`📝 Sending additional prompt to Assistant:\n${prompt}`);
+
+        // ✅ Save the user's additional prompt to the thread before sending it
+        thread.messages.push({
+            role: "user",
+            content: prompt,
+            timestamp: new Date()
+        });
+
+        await thread.save();
+        console.log("✅ Additional user prompt saved to thread.");
+
+        // Send prompt to assistant
         const messageResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
             method: "POST",
             headers: OPENAI_HEADERS,
@@ -283,6 +319,16 @@ app.post("/fetch-more-info", async (req, res) => {
                 const assistantMessage = messagesData.data.find(msg => msg.role === "assistant");
 
                 responseContent = assistantMessage?.content[0]?.text?.value || "No additional information found.";
+
+                // ✅ Save assistant's response to the thread
+                thread.messages.push({
+                    role: "assistant",
+                    content: responseContent,
+                    timestamp: new Date()
+                });
+
+                await thread.save();
+                console.log("✅ Additional assistant response saved to thread.");
                 break;
             }
         }
@@ -294,6 +340,8 @@ app.post("/fetch-more-info", async (req, res) => {
         res.status(500).json({ response: "Failed to fetch additional information." });
     }
 });
+
+
 
 
 // API route for fetching TTS audio
@@ -322,7 +370,7 @@ app.post("/fetch-tts", async (req, res) => {
 });
 
 
-// ✅ Function to fetch TTS with automatic retries
+// Function to fetch TTS with automatic retries
 async function fetchTTSWithRetry(text, retries = 3) {
     for (let i = 0; i < retries; i++) {
         try {
@@ -385,6 +433,6 @@ console.log("🔑 OpenAI API Key:", process.env.OPENAI_API_KEY ? "Loaded" : "MIS
 console.log("🤖 Assistant ID:", process.env.ASSISTANT_ID ? "Loaded" : "MISSING");
 
 
-// ✅ Start server
+// Start server
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
