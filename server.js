@@ -9,10 +9,8 @@ import { fileURLToPath } from "url"; // Needed for ES Modules
 import fs from "fs";
 
 dotenv.config();
-/*
 const app = express();
 app.use(express.json());
-
 
 /* Un-comment out this part if you want to run the app locally */
 /*app.use(cors());*/
