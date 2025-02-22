@@ -13,14 +13,14 @@ const app = express();
 app.use(express.json());
 
 /* Un-comment out this part if you want to run the app locally */
-/* app.use(cors());*/
+app.use(cors());
 
 /* Comment out this whole "app.use" part out if you want to run the app locally (and replace all urls in front of /fetch in Index.html), and then un-comment the "app.use(cors());" above it. */
-app.use(cors({
+/*app.use(cors({
     origin: "https://artefactintelligencestudy.hurtic.net",  // Replace url with your frontend URL
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"]
-}));
+})); */
 
 const OPENAI_HEADERS = {
     "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -54,7 +54,15 @@ const threadSchema = new mongoose.Schema({
     threadId: String,
     participantId: String,
     createdAt: { type: Date, default: Date.now },
-    messages: [{ role: String, content: String, timestamp: Date }]
+    messages: [{ role: String, content: String, timestamp: Date }],
+    artefactInteractions: [{
+        artefact: String,
+        descriptionType: String,
+        profile: String,
+        timeSpentSeconds: { type: Number, default: 0 }, // ✅ Default to 0
+        tellMeMoreClicked: { type: Number, default: 0 }, // ✅ Default to 0
+        timestamp: { type: Date, default: Date.now }
+    }]
 });
 
 const Thread = mongoose.model("Thread", threadSchema);
@@ -71,6 +79,72 @@ app.use(favicon(path.join(__dirname, "public", "favicon.ico")));
 // Route to serve the main HTML file
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "Index.html"));
+});
+
+app.post("/log-artefact-data", async (req, res) => {
+    const { participantId, artefact, descriptionType, profile } = req.body;
+
+    // ✅ Ensure numbers are valid or default to 0
+    let timeSpentSeconds = Number(req.body.timeSpentSeconds);
+    if (isNaN(timeSpentSeconds)) timeSpentSeconds = 0;
+
+    let tellMeMoreClicked = Number(req.body.tellMeMoreClicked);
+    if (isNaN(tellMeMoreClicked)) tellMeMoreClicked = 0;
+
+    console.log("🔍 Logging Artefact Data:", {
+        participantId,
+        artefact,
+        descriptionType,
+        profile,
+        timeSpentSeconds,
+        tellMeMoreClicked
+    });
+
+    if (!participantId || !artefact || !descriptionType || !profile) {
+        return res.status(400).json({ error: "Missing required artefact data fields." });
+    }
+
+    try {
+        let thread = await Thread.findOne({ participantId });
+
+        if (!thread) {
+            thread = new Thread({
+                participantId,
+                createdAt: new Date(),
+                messages: [],
+                artefactInteractions: []
+            });
+        }
+
+        const existingInteractionIndex = thread.artefactInteractions.findIndex(
+            interaction => interaction.artefact === artefact
+        );
+
+        if (existingInteractionIndex !== -1) {
+            // ✅ Safely update existing interaction
+            thread.artefactInteractions[existingInteractionIndex].timeSpentSeconds += timeSpentSeconds;
+            thread.artefactInteractions[existingInteractionIndex].tellMeMoreClicked += tellMeMoreClicked;
+            thread.artefactInteractions[existingInteractionIndex].timestamp = new Date();
+        } else {
+            // ✅ Add new artefact interaction with sanitized data
+            thread.artefactInteractions.push({
+                artefact,
+                descriptionType,
+                profile,
+                timeSpentSeconds,
+                tellMeMoreClicked,
+                timestamp: new Date()
+            });
+        }
+
+        await thread.save();
+        console.log("✅ Artefact data logged/updated in thread:", thread);
+        res.status(200).json({ message: "Artefact data logged/updated successfully." });
+
+    } catch (error) {
+        console.error("❌ Error logging artefact data:", error);
+        res.status(500).json({ error: "Failed to log artefact data." });
+    }
 });
 
 // API route for fetching adapted descriptions with failure detection
