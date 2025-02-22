@@ -527,7 +527,7 @@
             document.getElementById("artefact-description").innerHTML = `<span class="loading">🔄 Getting more details...</span>`;
 
             // Send artefact, profile, participantId, and currentDescription to the server
-            fetch("hhttps://artefactintelligencestudy.hurtic.net/fetch-more-info", {
+            fetch("https://artefactintelligencestudy.hurtic.net/fetch-more-info", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ artefact, profile, participantId, currentDescription }),
