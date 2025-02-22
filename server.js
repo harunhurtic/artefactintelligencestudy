@@ -13,11 +13,11 @@ const app = express();
 app.use(express.json());
 
 /* Un-comment out this part if you want to run the app locally */
-/*app.use(cors());*/
+/* app.use(cors());*/
 
 /* Comment out this whole "app.use" part out if you want to run the app locally (and replace all urls in front of /fetch in Index.html), and then un-comment the "app.use(cors());" above it. */
 app.use(cors({
-    origin: "https://artefactintelligencestudy.hurtic.net",  // 🔄 Replace url with your frontend URL
+    origin: "https://artefactintelligencestudy.hurtic.net",  // Replace url with your frontend URL
     methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
@@ -84,7 +84,7 @@ app.post("/fetch-description", async (req, res) => {
         return res.status(400).json({ error: "Missing artefact, profile, or participantId" });
     }
 
-    let prompt = `Adapt the following artefact description and make it more engaging for a museum visitor with the ${profile} profile while preserving factual accuracy. Ensure the adaptation is a seamless museum description that aligns with their preferences, interests, and motivations, without explicitly mentioning their profile or adding unnecessary details. Artefact: ${artefact}. Description: ${originalDescription}`;
+    let prompt = `Adapt the following artefact description and make it more engaging for a museum visitor with the "${profile}" profile while preserving factual accuracy. Ensure that the adaptation aligns with the preferences, interests, and motivations of their profile, without explicitly mentioning their profile or adding unnecessary details.\n\nArtefact: "${artefact}".\nDescription: "${originalDescription}"`;
 
     try {
         let thread = await Thread.findOne({ participantId });
@@ -239,29 +239,53 @@ app.post("/fetch-description", async (req, res) => {
 app.post("/fetch-more-info", async (req, res) => {
     console.log("🛠️ Received fetch-more-info request:", req.body);
 
-    const { artefact, profile, participantId } = req.body;
+    const { artefact, profile, participantId, currentDescription } = req.body;
 
-    if (!artefact || !profile || !participantId) {
-        console.error("❌ Missing required fields: artefact, profile, or participantId");
-        return res.status(400).json({ error: "Missing artefact, profile, or participantId" });
+    if (!artefact || !profile || !participantId || !currentDescription) {
+        console.error("❌ Missing required fields: artefact, profile, participantId, or currentDescription");
+        return res.status(400).json({ error: "Missing artefact, profile, participantId, or currentDescription" });
     }
 
     try {
         let thread = await Thread.findOne({ participantId });
 
+        // If no thread exists, create a new one
         if (!thread) {
-            console.error("❌ No existing thread found for this participant.");
-            return res.status(400).json({ error: "No existing thread found. Please start again." });
+            console.warn("⚠️ No existing thread found. Creating a new one...");
+
+            const threadResponse = await fetch("https://api.openai.com/v1/threads", {
+                method: "POST",
+                headers: OPENAI_HEADERS,
+                body: JSON.stringify({ metadata: { participantId } }),
+                timeout: 60000,
+            });
+
+            const threadData = await threadResponse.json();
+            if (!threadData.id) {
+                console.error("❌ Failed to create new thread.");
+                return res.status(500).json({ error: "Could not create a new thread." });
+            }
+
+            thread = new Thread({
+                threadId: threadData.id,
+                participantId,
+                createdAt: new Date(),
+                messages: []
+            });
+
+            await thread.save();
+            console.log(`✅ New Thread created for Participant ID: ${participantId}`);
         }
 
         let threadId = thread.threadId;
-        console.log(`✅ Found existing thread: ${threadId}`);
+        console.log(`✅ Using thread: ${threadId}`);
 
-        let prompt = `The visitor with the "${profile}" profile wants to learn more about the "${artefact}" artefact. Follow your system instructions while only providing additional information that you previously haven't provided. If there’s not much info left to provide, explain that to the visitor.`;
+        // Updated prompt including the current description
+        let prompt = `The visitor with the "${profile}" profile wants to learn more about the "${artefact}" artefact. They have already seen the following description:\n"${currentDescription}"\n\nPlease provide additional, non-redundant information that expands on the artefact. The new content should remain engaging, accurate, and tailored to the visitor’s profile preferences without explicitly referencing their profile or repeating previous details. If no significant new information is available, offer a subtle acknowledgment of that while maintaining an informative tone.`;
 
         console.log(`📝 Sending additional prompt to Assistant:\n${prompt}`);
 
-        // ✅ Save the user's additional prompt to the thread before sending it
+        // Save the user's additional prompt to the thread before sending it
         thread.messages.push({
             role: "user",
             content: prompt,
@@ -319,7 +343,7 @@ app.post("/fetch-more-info", async (req, res) => {
 
                 responseContent = assistantMessage?.content[0]?.text?.value || "No additional information found.";
 
-                // ✅ Save assistant's response to the thread
+                // Save assistant's response to the thread
                 thread.messages.push({
                     role: "assistant",
                     content: responseContent,
@@ -340,19 +364,22 @@ app.post("/fetch-more-info", async (req, res) => {
     }
 });
 
-
-
-
 // API route for fetching TTS audio
 app.post("/fetch-tts", async (req, res) => {
     const { text } = req.body;
 
     if (!text) {
+        console.error("❌ Missing text input for TTS");
         return res.status(400).json({ error: "Missing text input for TTS" });
     }
 
     try {
         const audioBuffer = await fetchTTSWithRetry(text);
+
+        if (!audioBuffer) {
+            console.error("❌ No audio buffer received.");
+            return res.status(500).json({ error: "Failed to generate TTS audio" });
+        }
 
         res.set({
             "Content-Type": "audio/mpeg",
@@ -363,11 +390,10 @@ app.post("/fetch-tts", async (req, res) => {
 
         res.send(audioBuffer);
     } catch (error) {
-        console.error("❌ Error fetching TTS:", error);
-        res.status(500).json({ error: "Failed to generate TTS audio" });
+        console.error("❌ Error fetching TTS:", error.message);
+        res.status(500).json({ error: "Failed to generate TTS audio. Please try again later." });
     }
 });
-
 
 // Function to fetch TTS with automatic retries
 async function fetchTTSWithRetry(text, retries = 3) {
@@ -383,7 +409,7 @@ async function fetchTTSWithRetry(text, retries = 3) {
                     input: text,
                     voice: "nova",
                 }),
-                timeout: 60000,  // ✅ Increase timeout to 60s
+                timeout: 90000,  // ⏳ Increased timeout to 90 seconds
             });
 
             if (!response.ok) throw new Error(`Failed to generate audio: ${response.statusText}`);
@@ -392,12 +418,12 @@ async function fetchTTSWithRetry(text, retries = 3) {
             console.log("🔊 TTS Audio successfully generated!");
             return Buffer.from(audioBuffer);
         } catch (error) {
-            console.error(`❌ TTS attempt ${i + 1} failed:`, error);
+            console.error(`❌ TTS attempt ${i + 1} failed:`, error.message);
             if (i === retries - 1) {
                 console.error("🚨 TTS service unavailable after multiple retries.");
                 throw error;
             }
-            await new Promise(res => setTimeout(res, 2000)); // ⏳ Wait before retrying
+            await new Promise(res => setTimeout(res, 3000)); // ⏳ Wait before retrying
         }
     }
 }
@@ -427,10 +453,8 @@ app.get("/export-threads", async (req, res) => {
     }
 });
 
-
 console.log("🔑 OpenAI API Key:", process.env.OPENAI_API_KEY ? "Loaded" : "MISSING");
 console.log("🤖 Assistant ID:", process.env.ASSISTANT_ID ? "Loaded" : "MISSING");
-
 
 // Start server
 const PORT = process.env.PORT || 8000;
