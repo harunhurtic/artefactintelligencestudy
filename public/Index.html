@@ -608,6 +608,16 @@
                     // Clear previous timeout to prevent premature error
                     if (audioLoadTimeout) clearTimeout(audioLoadTimeout);
 
+                    // Add canplaythrough event listener
+                    audio.addEventListener("canplaythrough", () => {
+                        hasAudioLoaded = true;
+                        console.log("✅ Audio can play through without buffering!");
+                        playButton.style.display = "block";
+                        loadingIndicator.style.display = "none";
+                        playButton.innerText = "🔊 Listen To Narration";
+                        moreInfoButton.style.display = "block";
+                    });
+
                     // Show play button when audio is ready
                     audio.addEventListener("loadeddata", () => {
                         hasAudioLoaded = true;  // Mark as loaded
