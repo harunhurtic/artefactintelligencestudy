@@ -565,22 +565,17 @@
             let loadingIndicator = document.getElementById("audio-loading");
             let moreInfoButton = document.getElementById("moreInfoButton");
 
-            // Immediately show the loading message and ensure sticky controls are visible
-            playButton.style.display = "none";
-            moreInfoButton.style.display = "none";
-            loadingIndicator.style.display = "block";
+            // Set button to loading state
+            playButton.style.display = "block";  // Ensure button is always visible
+            playButton.innerText = "⏳ Loading...";  // Show loading text
+            moreInfoButton.style.display = "none";  // Hide "Tell Me More" during TTS fetch
+            loadingIndicator.style.display = "none";  // Hide separate loading message
 
-            // Ensure sticky controls are visible
             const stickyControls = document.getElementById("sticky-audio-controls");
             stickyControls.classList.remove("hidden");
             stickyControls.classList.add("visible");
 
-            // Remove any existing error messages
-            const existingError = document.querySelector('.audio-error');
-            if (existingError) existingError.remove();
-
-            // Start the fetch process
-            let hasAudioLoaded = false;  // Track whether audio has loaded
+            let hasAudioLoaded = false;
 
             fetch("https://artefactintelligencestudy.hurtic.net/fetch-tts", {
                 method: "POST",
@@ -588,14 +583,10 @@
                 body: JSON.stringify({ text }),
             })
                 .then(response => {
-                    console.log("🟢 Response received. Checking if valid...");
-                    if (!response.ok) {
-                        throw new Error(`Server responded with status: ${response.status}`);
-                    }
+                    if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
                     return response.blob();
                 })
                 .then(audioBlob => {
-                    console.log("✅ Audio file received. Creating URL...");
                     let audioURL = URL.createObjectURL(audioBlob);
 
                     if (audio) {
@@ -605,67 +596,35 @@
 
                     audio = new Audio(audioURL);
 
-                    // Clear previous timeout to prevent premature error
-                    if (audioLoadTimeout) clearTimeout(audioLoadTimeout);
-
-                    // Add canplaythrough event listener
                     audio.addEventListener("canplaythrough", () => {
                         hasAudioLoaded = true;
-                        console.log("✅ Audio can play through without buffering!");
-                        playButton.style.display = "block";
-                        loadingIndicator.style.display = "none";
-                        playButton.innerText = "🔊 Listen To Narration";
-                        moreInfoButton.style.display = "block";
-                    });
-
-                    // Show play button when audio is ready
-                    audio.addEventListener("loadeddata", () => {
-                        hasAudioLoaded = true;  // Mark as loaded
                         console.log("✅ Audio loaded successfully!");
-                        playButton.style.display = "block";
-                        loadingIndicator.style.display = "none";
-                        playButton.innerText = "🔊 Listen To Narration"; // Reset button to "Play"
-                        moreInfoButton.style.display = "block"; // Show "Tell Me More" after audio loads
+
+                        playButton.innerText = "🔊 Listen To Narration";  // Update button text
+                        moreInfoButton.style.display = "block";  // Show "Tell Me More" after audio loads
                     });
 
                     playButton.onclick = () => toggleAudio();
                     audio.onended = () => {
-                        playButton.innerText = "🔊 Listen To Narration"; // Reset button when audio ends
+                        playButton.innerText = "🔊 Listen To Narration";  // Reset after playback
                     };
 
-                    // Timeout fallback if audio isn't loading within a reasonable time
-                    audioLoadTimeout = setTimeout(() => {
+                    // Handle timeout if audio fails to load
+                    setTimeout(() => {
                         if (!hasAudioLoaded) {
                             console.error("⛔ Audio failed to load within timeout.");
-                            playButton.style.display = "none";
-                            loadingIndicator.style.display = "none";
-
-                            // Display error message if audio failed
-                            let errorMessage = document.createElement("p");
-                            errorMessage.className = "audio-error";
-                            errorMessage.innerText = "⚠️ The narrator couldn't narrate. Try again later.";
-                            playButton.parentElement.insertBefore(errorMessage, playButton);
-
-                            moreInfoButton.style.display = "block"; // Still show "Tell Me More"
+                            playButton.innerText = "⚠️ Error loading audio";
+                            moreInfoButton.style.display = "block";
                         }
-                    }, 7000);  // 7-second timeout
+                    }, 7000);
                 })
                 .catch(error => {
                     console.error("❌ Error fetching TTS:", error);
-                    loadingIndicator.style.display = "none";
-
-                    // Clear any existing timeout
-                    if (audioLoadTimeout) clearTimeout(audioLoadTimeout);
-
-                    // Display error message if fetch failed
-                    let errorMessage = document.createElement("p");
-                    errorMessage.className = "audio-error";
-                    errorMessage.innerText = "⚠️ The narrator couldn't narrate. Try again later.";
-                    playButton.parentElement.insertBefore(errorMessage, playButton);
-
-                    moreInfoButton.style.display = "block"; // Still show "Tell Me More"
+                    playButton.innerText = "⚠️ Couldn't load narration";  // Show error on button
+                    moreInfoButton.style.display = "block";
                 });
         }
+
 
         async function playTTS(text) {
             try {
