@@ -556,6 +556,9 @@
                 });
         }
 
+        function isMobileDevice() {
+            return /Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+        }
 
         // Function to request TTS from server and buttons when loaded
         function requestTTS(text, isFromMoreInfo = false) {
@@ -565,17 +568,14 @@
             let loadingIndicator = document.getElementById("audio-loading");
             let moreInfoButton = document.getElementById("moreInfoButton");
 
-            // Set button to loading state
-            playButton.style.display = "block";  // Ensure button is always visible
-            playButton.innerText = "⏳ Loading...";  // Show loading text
-            moreInfoButton.style.display = "none";  // Hide "Tell Me More" during TTS fetch
-            loadingIndicator.style.display = "none";  // Hide separate loading message
+            // Immediately show the loading message
+            playButton.style.display = "none";
+            moreInfoButton.style.display = "none";
+            loadingIndicator.style.display = "block";
 
-            const stickyControls = document.getElementById("sticky-audio-controls");
-            stickyControls.classList.remove("hidden");
-            stickyControls.classList.add("visible");
-
-            let hasAudioLoaded = false;
+            // Remove existing error messages
+            const existingError = document.querySelector('.audio-error');
+            if (existingError) existingError.remove();
 
             fetch("https://artefactintelligencestudy.hurtic.net/fetch-tts", {
                 method: "POST",
@@ -596,35 +596,58 @@
 
                     audio = new Audio(audioURL);
 
-                    audio.addEventListener("canplaythrough", () => {
-                        hasAudioLoaded = true;
-                        console.log("✅ Audio loaded successfully!");
+                    let hasAudioLoaded = false;
 
-                        playButton.innerText = "🔊 Listen To Narration";  // Update button text
-                        moreInfoButton.style.display = "block";  // Show "Tell Me More" after audio loads
+                    audio.addEventListener("loadeddata", () => {
+                        hasAudioLoaded = true;
+                        loadingIndicator.style.display = "none";
+                        playButton.style.display = "block";
+                        playButton.innerText = "🔊 Listen To Narration";
+                        moreInfoButton.style.display = "block";
                     });
 
-                    playButton.onclick = () => toggleAudio();
-                    audio.onended = () => {
-                        playButton.innerText = "🔊 Listen To Narration";  // Reset after playback
+                    // Force show play button on mobile even if audio isn't loaded
+                    if (isMobileDevice()) {
+                        loadingIndicator.style.display = "none";
+                        playButton.style.display = "block";
+                        playButton.innerText = "🔊 Listen To Narration";
+                        moreInfoButton.style.display = "block";
+                    }
+
+                    playButton.onclick = () => {
+                        audio.play().then(() => {
+                            playButton.innerText = "⏸ Pause Narration";
+                        }).catch(err => {
+                            console.error("⚠️ Audio playback failed:", err);
+                            showAudioError(playButton, "⚠️ The narrator couldn't narrate. Try again later.");
+                        });
                     };
 
-                    // Handle timeout if audio fails to load
+                    audio.onended = () => {
+                        playButton.innerText = "🔊 Listen To Narration";
+                    };
+
+                    // Timeout fallback if audio doesn't load in 7 seconds
                     setTimeout(() => {
-                        if (!hasAudioLoaded) {
+                        if (!hasAudioLoaded && !isMobileDevice()) {
                             console.error("⛔ Audio failed to load within timeout.");
-                            playButton.innerText = "⚠️ Error loading audio";
-                            moreInfoButton.style.display = "block";
+                            showAudioError(playButton, "⚠️ The narrator couldn't narrate. Try again later.");
                         }
                     }, 7000);
                 })
                 .catch(error => {
                     console.error("❌ Error fetching TTS:", error);
-                    playButton.innerText = "⚠️ Couldn't load narration";  // Show error on button
-                    moreInfoButton.style.display = "block";
+                    loadingIndicator.style.display = "none";
+                    showAudioError(playButton, "⚠️ The narrator couldn't narrate. Try again later.");
                 });
         }
 
+        function showAudioError(playButton, message) {
+            let errorMessage = document.createElement("p");
+            errorMessage.className = "audio-error";
+            errorMessage.innerText = message;
+            playButton.parentElement.insertBefore(errorMessage, playButton);
+        }
 
         async function playTTS(text) {
             try {
@@ -666,40 +689,22 @@
         }
 
         function toggleAudio() {
+            if (!audio) return;
+
             let playButton = document.getElementById("playPauseButton");
 
-            // Ensure audio is created in user interaction
-            if (!audio) {
-                console.log("🔊 Creating new audio object inside user interaction.");
-                audio = new Audio();
-                audio.src = audioURL; // Use your existing audio URL here
-
-                // Handle loaded event
-                audio.addEventListener("canplaythrough", () => {
-                    console.log("✅ Audio can play through.");
-                    playButton.style.display = "block";
-                });
-
-                audio.addEventListener("error", (e) => {
-                    console.error("⛔ Audio error on creation:", e);
-                });
-            }
-
-            // Toggle play/pause
             if (audio.paused) {
                 audio.play().then(() => {
                     console.log("✅ Audio started.");
                     playButton.innerText = "⏸ Pause Narration";
                 }).catch(error => {
                     console.warn("⚠️ Audio play blocked, user interaction required.", error);
-                    alert("⚠️ Audio playback was blocked. Please tap again to play.");
                 });
             } else {
                 audio.pause();
                 playButton.innerText = "▶️ Continue Narration";
             }
         }
-
 
         function toggleStickyControls() {
             const stickyControls = document.getElementById('sticky-audio-controls');
