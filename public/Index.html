@@ -614,13 +614,19 @@
                         moreInfoButton.style.display = "block";
                     }
 
+                    // Corrected Play/Pause Logic
                     playButton.onclick = () => {
-                        audio.play().then(() => {
-                            playButton.innerText = "⏸ Pause Narration";
-                        }).catch(err => {
-                            console.error("⚠️ Audio playback failed:", err);
-                            showAudioError(playButton, "⚠️ The narrator couldn't narrate. Try again later.");
-                        });
+                        if (audio.paused) {
+                            audio.play().then(() => {
+                                playButton.innerText = "⏸ Pause Narration";
+                            }).catch(err => {
+                                console.error("⚠️ Audio playback failed:", err);
+                                showAudioError(playButton, "⚠️ The narrator couldn't narrate. Try again later.");
+                            });
+                        } else {
+                            audio.pause();
+                            playButton.innerText = "▶️ Continue Narration";
+                        }
                     };
 
                     audio.onended = () => {
@@ -641,6 +647,7 @@
                     showAudioError(playButton, "⚠️ The narrator couldn't narrate. Try again later.");
                 });
         }
+
 
         function showAudioError(playButton, message) {
             let errorMessage = document.createElement("p");
