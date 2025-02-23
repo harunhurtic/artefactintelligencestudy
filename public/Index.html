@@ -707,22 +707,40 @@
         }
 
         function toggleAudio() {
-            if (!audio) return;
-
             let playButton = document.getElementById("playPauseButton");
 
+            // Ensure audio is created in user interaction
+            if (!audio) {
+                console.log("🔊 Creating new audio object inside user interaction.");
+                audio = new Audio();
+                audio.src = audioURL; // Use your existing audio URL here
+
+                // Handle loaded event
+                audio.addEventListener("canplaythrough", () => {
+                    console.log("✅ Audio can play through.");
+                    playButton.style.display = "block";
+                });
+
+                audio.addEventListener("error", (e) => {
+                    console.error("⛔ Audio error on creation:", e);
+                });
+            }
+
+            // Toggle play/pause
             if (audio.paused) {
                 audio.play().then(() => {
                     console.log("✅ Audio started.");
                     playButton.innerText = "⏸ Pause Narration";
                 }).catch(error => {
                     console.warn("⚠️ Audio play blocked, user interaction required.", error);
+                    alert("⚠️ Audio playback was blocked. Please tap again to play.");
                 });
             } else {
                 audio.pause();
                 playButton.innerText = "▶️ Continue Narration";
             }
         }
+
 
         function toggleStickyControls() {
             const stickyControls = document.getElementById('sticky-audio-controls');
