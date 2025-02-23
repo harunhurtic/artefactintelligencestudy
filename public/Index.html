@@ -166,13 +166,13 @@
             }
 
             quizContainer.innerHTML = `
-            <div class="artefacts-container">
-                <h1>Welcome to Lillehammer Museum 🏛️ </h1>
-                <h3>Enter the Participant ID to continue</h3>
-                <input type="text" id="participant-input" placeholder="Enter Participant ID" style="font-size: 1.2em; padding: 10px; margin: 10px;">
-                    <button onclick="submitParticipantId()" class="nav-button">Start</button>
-            </div>
-            `;
+        <div class="artefacts-container">
+            <h1>Welcome to Lillehammer Museum 🏛️ </h1>
+            <h3>Enter the Participant ID to continue</h3>
+            <input type="text" id="participant-input" placeholder="Enter Participant ID" style="font-size: 1.2em; padding: 10px; margin: 10px;">
+            <button onclick="submitParticipantId()" class="nav-button">Start</button>
+        </div>
+    `;
         }
 
         function submitParticipantId() {
@@ -193,7 +193,26 @@
             }
 
             console.log(`✅ Participant ID set: ${participantId}`); // Log the ID for debugging
-            renderQuiz();  // Proceed to the quiz
+
+            // Render the welcome screen after successful ID entry
+            renderWelcomeScreen();
+        }
+
+        function renderWelcomeScreen() {
+            let quizContainer = document.getElementById("quiz-container");
+
+            if (!quizContainer) {
+                console.error("❌ Error: quiz-container not found!");
+                return;
+            }
+
+            quizContainer.innerHTML = `
+        <div class="card">
+            <h1 id="quiz-title">Welcome to Lillehammer Museum 🏛️ </h1>
+            <h3 id="pleaseAnswerQuestionsText">Please take a moment to answer a few questions so we can personalize your museum experience ✨</h3>
+            <button onclick="renderQuiz()" class="nav-button">Start</button>
+        </div>
+    `;
         }
 
         function renderQuiz() {
@@ -205,13 +224,9 @@
             }
 
             quizContainer.innerHTML = `
-            <div class="card">
-                <h1 id="quiz-title">Welcome to Lillehammer Museum 🏛️ </h1>
-                <h3 id="pleaseAnswerQuestionsText">Please take a moment to answer a few questions so we can personalize your museum experience ✨</h3>
-            </div>
-            <div id="quiz"></div>
-            <h3 id="result"></h3>
-            `;
+        <div id="quiz"></div>
+        <h3 id="result"></h3>
+    `;
 
             renderQuestion(0); // Start the quiz with the first question
         }
@@ -226,47 +241,75 @@
             }
 
             const currentQuestion = questions[questionIndex];
+
+            // Create and render the Previous Button card (only if not on the first question)
+            if (questionIndex > 0) {
+                let prevButtonCard = document.createElement("div");
+                prevButtonCard.className = "card";
+
+                let prevButton = document.createElement("button");
+                prevButton.className = "nextprev-button";
+                prevButton.innerText = "⬅️ Previous Question";
+                prevButton.onclick = () => renderQuestion(questionIndex - 1);
+
+                prevButtonCard.appendChild(prevButton);
+                quizDiv.appendChild(prevButtonCard);
+            }
+
+            // Render the Question Card
             const questionDiv = document.createElement("div");
             questionDiv.className = "card";
-            questionDiv.innerHTML = `<p>${currentQuestion.text}</p>`;
+            questionDiv.innerHTML = `<h3>${currentQuestion.text}</h3>`;
 
             const optionsContainer = document.createElement("div");
             optionsContainer.className = "options-container";
 
+            // Create the Next Button card, hidden by default
             let nextButtonCard = document.createElement("div");
-            nextButtonCard.className = "card"; // Separate card for the "Next Question" button
-            nextButtonCard.style.display = "none"; // Hidden until an answer is selected
+            nextButtonCard.className = "card";
+            nextButtonCard.style.display = "none"; // Hidden until answer is selected
 
             let nextButton = document.createElement("button");
-            nextButton.className = "next-button";
-            nextButton.innerText = "Next Question";
+            nextButton.className = "nextprev-button";
+            nextButton.innerText = "Next Question ➡️";
             nextButton.onclick = () => renderQuestion(questionIndex + 1);
+
             nextButtonCard.appendChild(nextButton);
 
+            // Render answer options and check for previous selection
             currentQuestion.options.forEach((option, optIndex) => {
                 const button = document.createElement("button");
                 button.className = "option-button";
                 button.innerText = option.answer;
-                button.onclick = () => selectAnswer(questionIndex, optIndex, button, nextButtonCard);
+
+                // Check if this option was previously selected
+                if (userResponses[questionIndex] && userResponses[questionIndex].answer === option.answer) {
+                    button.classList.add("selected");
+                    nextButtonCard.style.display = "block"; // Show the Next button if already answered
+                }
+
+                button.onclick = () => {
+                    selectAnswer(questionIndex, optIndex, button, nextButtonCard); // Pass nextButtonCard for control
+                };
 
                 optionsContainer.appendChild(button);
             });
 
             questionDiv.appendChild(optionsContainer);
             quizDiv.appendChild(questionDiv);
-            quizDiv.appendChild(nextButtonCard); // Add the next button card (hidden initially)
+            quizDiv.appendChild(nextButtonCard);
         }
+
+
 
         function selectAnswer(questionIndex, optionIndex, selectedButton, nextButtonCard) {
             let selectedOption = questions[questionIndex].options[optionIndex];
 
-            // Toggle selection: If already selected, remove the answer
+            // Toggle selection/deselection logic
             if (userResponses[questionIndex] === selectedOption) {
-                delete userResponses[questionIndex]; // Remove answer
-                selectedButton.classList.remove("selected"); // Remove highlight
-
-                // Hide the "Next Question" card if no answer is selected
-                nextButtonCard.style.display = "none";
+                delete userResponses[questionIndex];
+                selectedButton.classList.remove("selected");
+                nextButtonCard.style.display = "none"; // Hide Next button if deselected
                 return;
             }
 
@@ -280,13 +323,13 @@
             }
 
             // Remove "selected" class from all buttons in this question
-            const optionButtons = document.querySelectorAll(".option-button");
+            const optionButtons = selectedButton.parentElement.querySelectorAll(".option-button");
             optionButtons.forEach(button => button.classList.remove("selected"));
 
             // Add "selected" class to the clicked button
             selectedButton.classList.add("selected");
 
-            // Show the "Next Question" card after selecting an answer
+            // Show the Next button card after selecting an answer
             nextButtonCard.style.display = "block";
         }
 
@@ -331,7 +374,6 @@
                 <h1>Lillehammer Museum - Artefacts</h1>
                 <p><strong>Assigned Profile:</strong> ${profile}</p>
                 <p><strong>Delivery:</strong> ${deliveryMode}</p>
-                <button onclick="renderQuiz()" class="nav-button">🔄 Change Preferences</button>
             </div>
 
             <div class="artefacts-container">
@@ -742,7 +784,6 @@
 
         window.onload = renderParticipantScreen;
 
-        /* Developed by Harun Hurtic as part of his Master's Thesis at the Norwegian University of Science and Technology (NTNU) */
     </script>
 </body>
 
