@@ -455,13 +455,11 @@ app.post("/fetch-tts", async (req, res) => {
             return res.status(500).json({ error: "Failed to generate TTS audio" });
         }
 
-        // Add CORS header here
         res.set({
             "Content-Type": "audio/mpeg",
             "Content-Length": audioBuffer.length,
             "Accept-Ranges": "bytes",
             "Cache-Control": "no-cache",
-            "Access-Control-Allow-Origin": "*", // Allow all origins for CORS (mobile fix)
         });
 
         res.send(audioBuffer);
@@ -470,7 +468,6 @@ app.post("/fetch-tts", async (req, res) => {
         res.status(500).json({ error: "Failed to generate TTS audio. Please try again later." });
     }
 });
-
 
 // Function to fetch TTS with automatic retries
 async function fetchTTSWithRetry(text, retries = 3) {
