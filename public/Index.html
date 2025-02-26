@@ -458,9 +458,9 @@
         function backToArtefacts(profile) {
             if (artefactStartTime && currentArtefact) {
                 const endTime = Date.now();
-                artefactData.timeSpentSeconds = Math.floor((endTime - artefactStartTime) / 1000);
+                artefactData.timeSpentSeconds = Math.floor((endTime - artefactStartTime) / 1000); // ✅ Correct field name
 
-                // Ensure "Tell Me More" clicks are included in the logged data
+                // Send data to server
                 fetch("https://artefactintelligencestudy.hurtic.net/log-artefact-data", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -471,10 +471,9 @@
                     .catch(error => console.error("❌ Error logging artefact data:", error));
             }
 
-            // Reset artefact tracking variables only AFTER logging
+            // Reset artefact tracking variables
             artefactStartTime = null;
             currentArtefact = null;
-            artefactData.tellMeMoreClicked = 0; // Reset tellMeMoreClicked AFTER logging
 
             showArtefacts(profile);
         }
@@ -542,15 +541,6 @@
 
             // Increment message count
             artefactData.messagesClicked += 1;
-
-            fetch("https://artefactintelligencestudy.hurtic.net/log-artefact-data", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(artefactData)
-            })
-                .then(response => response.json())
-                .then(data => console.log("✅ 'Tell Me More' logged:", data))
-                .catch(error => console.error("❌ Error logging 'Tell Me More':", error));
 
             // Get the currently displayed artefact description from the DOM
             const currentDescription = document.getElementById("artefact-description").innerText;
