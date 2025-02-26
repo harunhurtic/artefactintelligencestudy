@@ -417,8 +417,10 @@
                 timeSpentSeconds: 0,
                 tellMeMoreClicked: 0,
                 deliveryMode: deliveryPreference === "Auditory" ? "Auditory" : "Text-Based",
-                playedAudio: artefactData?.playedAudio || "No"
+                playedAudio: "No" // Default to "No" for new artefact
             };
+            // Assign the artefact-specific data
+            let currentArtefactData = artefactData[artefact];
 
             // Conditionally render audio controls based on delivery preference
             let audioControlsHTML = `
