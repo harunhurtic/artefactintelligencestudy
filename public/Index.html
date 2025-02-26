@@ -24,14 +24,6 @@
         let controlsExpanded = true;  // Track expand/collapse state
         let artefactStartTime = null;
         let currentArtefact = null;
-        let artefactData = {
-            participantId: "",
-            artefact: "",
-            descriptionType: "",
-            profile: "",
-            timeSpentSeconds: 0,
-            tellMeMoreClicked: 0
-        };
 
         const questions = [
             {
@@ -126,7 +118,6 @@
             }
         };
 
-
         // Latin Square Configuration
         const latinSquare = [
             ["Adapted", "General", "Original"],
@@ -155,7 +146,6 @@
             };
             return profileMapping[profile] || 7;
         }
-
 
         function renderParticipantScreen() {
             let quizContainer = document.getElementById("quiz-container");
@@ -424,7 +414,9 @@
                 descriptionType: descriptionType,
                 profile: profile,
                 timeSpentSeconds: 0,
-                tellMeMoreClicked: 0
+                tellMeMoreClicked: 0,
+                deliveryMode: deliveryPreference === "Auditory" ? "Auditory" : "Text-Based",
+                playedAudio: "No"  // Initialize as "No"
             };
 
             // Conditionally render audio controls based on delivery preference
@@ -458,7 +450,7 @@
         function backToArtefacts(profile) {
             if (artefactStartTime && currentArtefact) {
                 const endTime = Date.now();
-                artefactData.timeSpentSeconds = Math.floor((endTime - artefactStartTime) / 1000); // ✅ Correct field name
+                artefactData.timeSpentSeconds = Math.floor((endTime - artefactStartTime) / 1000);
 
                 // Send data to server
                 fetch("https://artefactintelligencestudy.hurtic.net/log-artefact-data", {
@@ -746,6 +738,10 @@
                 audio.play().then(() => {
                     console.log("✅ Audio started.");
                     playButton.innerText = "⏸ Pause Narration";
+
+                    if (artefactData.playedAudio === "No") {
+                        artefactData.playedAudio = "Yes";  // Mark the audio as played
+                    }
                 }).catch(error => {
                     console.warn("⚠️ Audio play blocked, user interaction required.", error);
                 });
