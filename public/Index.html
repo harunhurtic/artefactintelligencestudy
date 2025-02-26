@@ -416,7 +416,7 @@
                 timeSpentSeconds: 0,
                 tellMeMoreClicked: 0,
                 deliveryMode: deliveryPreference === "Auditory" ? "Auditory" : "Text-Based",
-                playedAudio: "No"  // Initialize as "No"
+                playedAudio: artefactData?.playedAudio || "No"
             };
 
             // Conditionally render audio controls based on delivery preference
@@ -630,6 +630,13 @@
 
                     audio = new Audio(audioURL);
 
+                    audio.onplay = () => {
+                        if (artefactData.playedAudio === "No") {
+                            artefactData.playedAudio = "Yes";
+                            console.log("✅ Audio started playing, updating playedAudio.");
+                        }
+                    };
+
                     let hasAudioLoaded = false;
 
                     audio.addEventListener("loadeddata", () => {
@@ -741,6 +748,7 @@
 
                     if (artefactData.playedAudio === "No") {
                         artefactData.playedAudio = "Yes";  // Mark the audio as played
+                        console.log("🔊 Audio played, updating artefactData:", artefactData);
                     }
                 }).catch(error => {
                     console.warn("⚠️ Audio play blocked, user interaction required.", error);
