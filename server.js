@@ -59,8 +59,10 @@ const threadSchema = new mongoose.Schema({
         artefact: String,
         descriptionType: String,
         profile: String,
-        timeSpentSeconds: { type: Number, default: 0 }, // ✅ Default to 0
-        tellMeMoreClicked: { type: Number, default: 0 }, // ✅ Default to 0
+        timeSpentSeconds: { type: Number, default: 0 },
+        tellMeMoreClicked: { type: Number, default: 0 },
+        deliveryMode: { type: String, enum: ["Text-Based", "Auditory"], required: true },
+        playedAudio: { type: String, enum: ["Yes", "No"], default: "No" },
         timestamp: { type: Date, default: Date.now }
     }]
 });
@@ -82,9 +84,9 @@ app.get("/", (req, res) => {
 });
 
 app.post("/log-artefact-data", async (req, res) => {
-    const { participantId, artefact, descriptionType, profile } = req.body;
+    const { participantId, artefact, descriptionType, profile, deliveryMode, playedAudio } = req.body;
 
-    // ✅ Ensure numbers are valid or default to 0
+    // Ensure numbers are valid or default to 0
     let timeSpentSeconds = Number(req.body.timeSpentSeconds);
     if (isNaN(timeSpentSeconds)) timeSpentSeconds = 0;
 
@@ -97,7 +99,9 @@ app.post("/log-artefact-data", async (req, res) => {
         descriptionType,
         profile,
         timeSpentSeconds,
-        tellMeMoreClicked
+        tellMeMoreClicked,
+        deliveryMode,
+        playedAudio
     });
 
     if (!participantId || !artefact || !descriptionType || !profile) {
@@ -121,18 +125,22 @@ app.post("/log-artefact-data", async (req, res) => {
         );
 
         if (existingInteractionIndex !== -1) {
-            // ✅ Safely update existing interaction
+            // Safely update existing interaction
             thread.artefactInteractions[existingInteractionIndex].timeSpentSeconds += timeSpentSeconds;
             thread.artefactInteractions[existingInteractionIndex].tellMeMoreClicked += tellMeMoreClicked;
+            thread.artefactInteractions[existingInteractionIndex].deliveryMode = deliveryMode;
+            thread.artefactInteractions[existingInteractionIndex].playedAudio = playedAudio;
             thread.artefactInteractions[existingInteractionIndex].timestamp = new Date();
         } else {
-            // ✅ Add new artefact interaction with sanitized data
+            // Add new artefact interaction with sanitized data
             thread.artefactInteractions.push({
                 artefact,
                 descriptionType,
                 profile,
                 timeSpentSeconds,
                 tellMeMoreClicked,
+                deliveryMode,
+                playedAudio,
                 timestamp: new Date()
             });
         }
