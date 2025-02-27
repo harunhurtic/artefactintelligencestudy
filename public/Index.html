@@ -171,7 +171,7 @@
             participantId = inputField.value.trim();
 
             // Regular expression to validate Participant ID format (p1, P1, p2, P2, etc.)
-            const validIdPattern = /^p\d+$/i;
+            const validIdPattern = /^p[1-9]\d*$/i; // Ensures p0 is not allowed
 
             if (!participantId) {
                 alert("Please enter a valid Participant ID.");
