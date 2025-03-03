@@ -170,8 +170,8 @@
             const inputField = document.getElementById("participant-input");
             participantId = inputField.value.trim();
 
-            // Regular expression to validate Participant ID format (p1, P1, p2, P2, etc.)
-            const validIdPattern = /^p[1-9]\d*$/i; // Ensures p0 is not allowed
+            // Regular expression to validate Participant ID format (p1, p2, p3, etc.)
+            const validIdPattern = /^p[1-9]\d*$/; // Ensures p0 is not allowed
 
             if (!participantId) {
                 alert("Please enter a valid Participant ID.");
@@ -179,7 +179,7 @@
             }
 
             if (!validIdPattern.test(participantId)) {
-                alert("Invalid Participant ID format. Please enter it as 'p1', 'p2' or 'P1', 'P2', etc.");
+                alert("Invalid Participant ID format. No upper case letters are allowed. Please enter it as 'p1', 'p2' or 'p3', etc.");
                 return;
             }
 
