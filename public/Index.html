@@ -27,6 +27,13 @@
         let artefactData = {}; // Global variable to store artefact data
 
         const questions = [
+            /* Enable if you want the participants to choose their style of delivery.
+            {
+                text: "How do you best engage with museum content? (1/7)", options: [
+                    { answer: "Listening to guides, podcasts, or audio tours.", delivery: "Auditory" },
+                    { answer: "Reading text panels, labels, and descriptions.", delivery: "Text-based" }
+                ]
+            },*/
             {
                 text: "How often do you visit museums? (1/6)", options: [
                     { answer: "As often as I can. I love discovering new things.", score: 5, profile: "Explorer" },
@@ -418,7 +425,7 @@
                 profile: profile,
                 timeSpentSeconds: 0,
                 tellMeMoreClicked: 0,
-                deliveryMode: "Auditory",
+                deliveryMode: deliveryPreference === "Auditory" ? "Auditory" : "Text-Based",
                 playedAudio: "No" // Default to "No" for new artefact
             };
             // Assign the artefact-specific data
@@ -428,10 +435,10 @@
             let audioControlsHTML = `
         <div id="sticky-audio-controls" class="sticky-audio-controls">
             <button id="toggle-controls" onclick="toggleStickyControls()">⬇️</button>
-            
-            <p id="audio-loading" class="loading" style="display: block;">🔊 The narrator is getting ready...</p>
-            <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
-
+            ${deliveryPreference === "Auditory" ? `
+                <p id="audio-loading" class="loading" style="display: block;">🔊 The narrator is getting ready...</p>
+                <button id="playPauseButton" onclick="toggleAudio()" class="audio-button" style="display: none;">🔊 Listen To Narration</button>
+            ` : ''}
             <button id="moreInfoButton" onclick="requestMoreInfo('${artefact}', '${profile}')" class="audio-button" style="display: block;">📝 Tell Me More...</button>
         </div>
     `;
@@ -508,11 +515,12 @@
                         document.getElementById("sticky-audio-controls").classList.add("visible");
                     }, 300);
 
-                    document.getElementById("audio-loading").style.display = "block";
-                    requestTTS(data.response, true);
-
-                    document.getElementById("moreInfoButton").style.display = "block";
-
+                    if (deliveryPreference === "Auditory") {
+                        document.getElementById("audio-loading").style.display = "block";
+                        requestTTS(data.response, true);
+                    } else {
+                        document.getElementById("moreInfoButton").style.display = "block";
+                    }
                 })
                 .catch(error => {
                     console.error("❌ Error fetching description:", error);
@@ -580,11 +588,12 @@
                         document.getElementById("sticky-audio-controls").classList.add("visible");
                     }, 300);
 
-                    loadingIndicator.style.display = "block";
-                    requestTTS(data.response, true); // Call updated requestTTS
-
-                    moreInfoButton.style.display = "block"; // Show "Tell Me More" again
-
+                    if (deliveryPreference === "Auditory") {
+                        loadingIndicator.style.display = "block";
+                        requestTTS(data.response, true); // Call updated requestTTS
+                    } else {
+                        moreInfoButton.style.display = "block"; // Show "Tell Me More" again
+                    }
                 })
                 .catch(error => {
                     console.error("❌ Error fetching more details:", error);
