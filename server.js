@@ -332,7 +332,7 @@ app.post("/fetch-more-info", async (req, res) => {
         let thread = await Thread.findOne({ participantId });
 
         // If no thread exists, create a new one
-        if (!thread || !thread.threadId) {
+        if (!thread) {
             console.warn("⚠️ No existing thread found. Creating a new one...");
 
             const threadResponse = await fetch("https://api.openai.com/v1/threads", {
@@ -385,18 +385,8 @@ app.post("/fetch-more-info", async (req, res) => {
             timeout: 60000,
         });
 
-        if (!messageResponse.ok) {
-            const errorDetails = await messageResponse.text();
-            console.error(`❌ OpenAI message error: ${messageResponse.status} - ${errorDetails}`);
-            return res.status(500).json({ error: `Failed to add message: ${errorDetails}` });
-        }
-
         const messageData = await messageResponse.json();
-        if (!messageData.id) {
-            console.error("❌ OpenAI response missing 'id'");
-            return res.status(500).json({ error: "Failed to add message." });
-        }
-
+        if (!messageData.id) throw new Error("Failed to add message");
 
         console.log("▶️ Running Assistant for additional info...");
         const runResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs`, {
