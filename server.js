@@ -150,7 +150,6 @@ app.post("/log-artefact-data", async (req, res) => {
         res.status(200).json({ message: "Artefact data logged/updated successfully." });
 
     } catch (error) {
-        console.error("❌ Error logging artefact data:", error);
         res.status(500).json({ error: "Failed to log artefact data." });
     }
 });
