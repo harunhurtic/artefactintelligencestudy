@@ -170,7 +170,7 @@ app.post("/fetch-description", async (req, res) => {
     try {
         let thread = await Thread.findOne({ participantId });
 
-        if (!thread) {
+        if (!thread || !thread.threadId) { //Ensure threadId exists
             console.log("🟢 Creating a new thread...");
             const threadResponse = await fetch("https://api.openai.com/v1/threads", {
                 method: "POST",
@@ -331,8 +331,8 @@ app.post("/fetch-more-info", async (req, res) => {
         let thread = await Thread.findOne({ participantId });
 
         // If no thread exists, create a new one
-        if (!thread) {
-            console.warn("⚠️ No existing thread found. Creating a new one...");
+        if (!thread || !thread.threadId) {
+            console.log("⚠️ No existing thread found. Creating a new one...");
 
             const threadResponse = await fetch("https://api.openai.com/v1/threads", {
                 method: "POST",
