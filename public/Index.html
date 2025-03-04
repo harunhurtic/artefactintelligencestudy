@@ -24,6 +24,7 @@
         let controlsExpanded = true;  // Track expand/collapse state
         let artefactStartTime = null;
         let currentArtefact = null;
+        let abortController = new AbortController();
         let artefactData = {}; // Global variable to store artefact data
 
         const questions = [
@@ -453,11 +454,30 @@
         }
 
         function backToArtefacts(profile) {
+            // Stop any ongoing audio playback
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+                audio = null;
+            }
+
+            // Abort any ongoing "Tell Me More" fetch requests
+            if (abortController) {
+                abortController.abort();
+                abortController = new AbortController();  // Reset controller for future requests
+            }
+
+            if (audioLoadTimeout) {
+                clearTimeout(audioLoadTimeout);
+                audioLoadTimeout = null;
+            }
+
+            // Ensure artefact interaction time is recorded before navigating back
             if (artefactStartTime && currentArtefact) {
                 const endTime = Date.now();
                 artefactData.timeSpentSeconds = Math.floor((endTime - artefactStartTime) / 1000);
 
-                // Send data to server
+                // Send artefact data to server
                 fetch("https://artefactintelligencestudy.hurtic.net/log-artefact-data", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -468,12 +488,13 @@
                     .catch(error => console.error("❌ Error logging artefact data:", error));
             }
 
-            // Reset artefact tracking variables
+            // Reset tracking variables
             artefactStartTime = null;
             currentArtefact = null;
 
             showArtefacts(profile);
         }
+
 
         function fetchOpenAITTS(artefact, profile) {
             let originalDescription = artefactDescriptions[artefact] || "No description available.";
@@ -548,6 +569,10 @@
                 audio = null;
             }
 
+            // Abort any previous fetch request before making a new one
+            abortController.abort();
+            abortController = new AbortController();
+
             // Hide sticky controls while fetching data
             document.getElementById("sticky-audio-controls").classList.remove("visible");
             document.getElementById("sticky-audio-controls").classList.add("hidden");
@@ -569,6 +594,7 @@
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ artefact, profile, participantId, currentDescription }),
+                signal: abortController.signal // Attach signal to allow aborting
             })
                 .then(response => response.json())
                 .then(data => {
@@ -591,6 +617,8 @@
                     document.getElementById("artefact-description").innerText = "Failed to fetch additional information.";
                     if (moreInfoButton) moreInfoButton.style.display = "block";
                 });
+
+
         }
 
         function isMobileDevice() {
