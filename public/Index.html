@@ -388,6 +388,9 @@
         }
 
         function showArtefactDetails(artefact, profile) {
+            // Ensure the page scrolls to the top when switching artefacts
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
             if (audio) {
                 audio.pause();
                 audio.currentTime = 0;
