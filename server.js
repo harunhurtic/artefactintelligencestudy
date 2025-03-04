@@ -6,7 +6,7 @@ import mongoose from "mongoose"
 import favicon from "serve-favicon";
 import path from "path";
 import { fileURLToPath } from "url"; // Needed for ES Modules
-import fs from "fs";
+/*import fs from "fs";*/
 
 dotenv.config();
 const app = express();
