@@ -476,9 +476,9 @@
             }
 
             // Abort any ongoing TTS request
-            if (window.ttsAbortController) {
-                console.log("Aborting previous TTS request...");
-                window.ttsAbortController.abort();  // Cancel the fetch request
+            if (window.moreInfoAbortController) {
+                console.log("Aborting any ongoing 'Tell Me More' requests...");
+                window.moreInfoAbortController.abort();
             }
 
             // Ensure audio is completely reset
@@ -566,6 +566,9 @@
             window.moreInfoAbortController = new AbortController();
             const { signal } = window.moreInfoAbortController;
 
+            // Save current artefact at request time
+            const requestedArtefact = currentArtefact;
+
             // Increment message count
             artefactData.tellMeMoreClicked += 1;
 
@@ -600,9 +603,16 @@
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ artefact, profile, participantId, currentDescription }),
+                signal: signal // Attach signal to abort request if needed
             })
                 .then(response => response.json())
                 .then(data => {
+                    // Check if the user has navigated away
+                    if (requestedArtefact !== currentArtefact) {
+                        console.log("User has navigated away. Ignoring outdated response.");
+                        return; // Do not update the UI
+                    }
+
                     document.getElementById("artefact-description").innerText = data.response;
 
                     // Re-show sticky controls after content loads
