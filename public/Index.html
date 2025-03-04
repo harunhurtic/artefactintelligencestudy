@@ -732,7 +732,7 @@
                     // Timeout fallback if audio doesn't load in 7 seconds
                     setTimeout(() => {
                         if (!hasAudioLoaded && !isMobileDevice()) {
-                            console.error("⛔ Audio failed to load within timeout.");
+                            console.error("Audio failed to load within timeout.");
                             showAudioError(playButton, "⚠️ The narrator couldn't narrate. Try again later.");
                         }
                     }, 7000);
