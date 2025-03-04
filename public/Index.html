@@ -475,6 +475,11 @@
                     .catch(error => console.error("❌ Error logging artefact data:", error));
             }
 
+            // Reset TTS audio
+            audio.pause();
+            audio.currentTime = 0;
+            audio = null;
+
             // Reset artefact tracking variables
             artefactStartTime = null;
             currentArtefact = null;
