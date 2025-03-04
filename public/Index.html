@@ -475,10 +475,18 @@
                     .catch(error => console.error("❌ Error logging artefact data:", error));
             }
 
-            // Reset TTS audio
-            audio.pause();
-            audio.currentTime = 0;
-            audio = null;
+            // Abort any ongoing TTS request
+            if (window.ttsAbortController) {
+                console.log("Aborting previous TTS request...");
+                window.ttsAbortController.abort();  // Cancel the fetch request
+            }
+
+            // Ensure audio is completely reset
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+                audio = null;
+            }
 
             // Reset artefact tracking variables
             artefactStartTime = null;
@@ -547,6 +555,16 @@
                 console.error("❌ Missing required fields: artefact, profile, or participantId");
                 return;
             }
+
+            // Abort any previous request if one exists
+            if (window.moreInfoAbortController) {
+                console.log("Aborting previous 'Tell Me More' request...");
+                window.moreInfoAbortController.abort();
+            }
+
+            // Create a new AbortController for this request
+            window.moreInfoAbortController = new AbortController();
+            const { signal } = window.moreInfoAbortController;
 
             // Increment message count
             artefactData.tellMeMoreClicked += 1;
@@ -618,6 +636,16 @@
             let playButton = document.getElementById("playPauseButton");
             let loadingIndicator = document.getElementById("audio-loading");
             let moreInfoButton = document.getElementById("moreInfoButton");
+
+            // Abort previous request if one exists
+            if (window.ttsAbortController) {
+                console.log("⛔ Aborting previous TTS request...");
+                window.ttsAbortController.abort();
+            }
+
+            // Create a new AbortController for this request
+            window.ttsAbortController = new AbortController();
+            const { signal } = window.ttsAbortController;
 
             // Immediately show the loading message
             playButton.style.display = "none";
