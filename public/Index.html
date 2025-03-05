@@ -421,28 +421,16 @@
             // Initialize artefact data
             artefactStartTime = Date.now();
             currentArtefact = artefact;
-
-            // Retrieve stored state if available
-            if (!artefactData[artefact]) {
-                artefactData[artefact] = {
-                    participantId: participantId,
-                    artefact: artefact,
-                    descriptionType: descriptionType,
-                    profile: profile,
-                    timeSpentSeconds: 0,
-                    tellMeMoreClicked: 0,
-                    deliveryMode: deliveryPreference === "Auditory" ? "Auditory" : "Text-Based",
-                    playedAudio: "No"
-                };
-            }
-
-            // Maintain playedAudio state if already set to "Yes"
-            if (artefactData[artefact].playedAudio === "Yes") {
-                console.log(`🔊 Audio has already been played for ${artefact}`);
-            } else {
-                artefactData[artefact].playedAudio = "No"; // Default when first visiting
-            }
-
+            artefactData = {
+                participantId: participantId,
+                artefact: artefact,
+                descriptionType: descriptionType,
+                profile: profile,
+                timeSpentSeconds: 0,
+                tellMeMoreClicked: 0,
+                deliveryMode: deliveryPreference === "Auditory" ? "Auditory" : "Text-Based",
+                playedAudio: "No" // Default to "No" for new artefact
+            };
             // Assign the artefact-specific data
             let currentArtefactData = artefactData[artefact];
 
@@ -701,8 +689,10 @@
                     audio = new Audio(audioURL);
 
                     audio.onplay = () => {
-                        if (artefactData[currentArtefact].playedAudio === "No") {
-                            artefactData[currentArtefact].playedAudio = "Yes";
+                        if (artefactData[artefact] && artefactData[artefact].playedAudio === "Yes") {
+                            console.log(`🔊 Audio has already been played for ${artefact}`);
+                        } else if (artefactData[artefact]) {
+                            artefactData[artefact].playedAudio = "No"; // Default when first visiting
                         }
                     };
 
