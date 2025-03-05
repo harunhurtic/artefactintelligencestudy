@@ -416,22 +416,6 @@
 
             const artefactDescription = artefactDescriptions[artefact][descriptionKey];
 
-            // Ensure artefactData object exists for the artefact
-            if (!artefactData[artefact]) {
-                artefactData[artefact] = {
-                    playedAudio: "No" // Default to "No"
-                };
-            }
-
-            let previousPlayedAudio = artefactData[artefact].playedAudio;
-
-            // Keep playedAudio state if it was already set to "Yes"
-            if (artefactData[artefact].playedAudio === "Yes") {
-                console.log(`Retaining playedAudio = "Yes" for ${artefact}`);
-            } else {
-                artefactData[artefact].playedAudio = "No"; // Set default only if it's never been played
-            }
-
             // Initialize artefact data
             artefactStartTime = Date.now();
             currentArtefact = artefact;
@@ -443,7 +427,7 @@
                 timeSpentSeconds: 0,
                 tellMeMoreClicked: 0,
                 deliveryMode: deliveryPreference === "Auditory" ? "Auditory" : "Text-Based",
-                playedAudio: previousPlayedAudio // Retain "Yes" if it was played before
+                playedAudio: "No" // Default to "No" for new artefact
             };
             // Assign the artefact-specific data
             let currentArtefactData = artefactData[artefact];
@@ -703,9 +687,9 @@
                     audio = new Audio(audioURL);
 
                     audio.onplay = () => {
-                        if (artefactData[currentArtefact]?.playedAudio === "No") {
-                            artefactData[currentArtefact].playedAudio = "Yes";
-                            console.log(`Audio played for ${currentArtefact}. playedAudio set to 'Yes' permanently.`);
+                        if (artefactData.playedAudio === "No") {
+                            artefactData.playedAudio = "Yes";
+                            console.log("✅ Audio started playing, updating playedAudio.");
                         }
                     };
 
@@ -818,10 +802,9 @@
                     console.log("✅ Audio started.");
                     playButton.innerText = "⏸ Pause Narration";
 
-                    // Update the artefactData to ensure playedAudio remains "Yes"
-                    if (artefactData[currentArtefact].playedAudio === "No") {
-                        artefactData[currentArtefact].playedAudio = "Yes";
-                        console.log("🔊 Audio played, permanently setting playedAudio to 'Yes' for:", currentArtefact);
+                    if (artefactData.playedAudio === "No") {
+                        artefactData.playedAudio = "Yes";  // Mark the audio as played
+                        console.log("🔊 Audio played, updating artefactData:", artefactData);
                     }
                 }).catch(error => {
                     console.warn("⚠️ Audio play blocked, user interaction required.", error);
