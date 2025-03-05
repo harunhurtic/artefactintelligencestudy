@@ -292,8 +292,6 @@
             quizDiv.appendChild(nextButtonCard);
         }
 
-
-
         function selectAnswer(questionIndex, optionIndex, selectedButton, nextButtonCard) {
             let selectedOption = questions[questionIndex].options[optionIndex];
 
@@ -418,6 +416,9 @@
 
             const artefactDescription = artefactDescriptions[artefact][descriptionKey];
 
+            // Check if this artefact was played before and retain "Yes" state
+            let previousPlayedAudio = artefactData[artefact]?.playedAudio === "Yes" ? "Yes" : "No";
+
             // Initialize artefact data
             artefactStartTime = Date.now();
             currentArtefact = artefact;
@@ -429,7 +430,7 @@
                 timeSpentSeconds: 0,
                 tellMeMoreClicked: 0,
                 deliveryMode: deliveryPreference === "Auditory" ? "Auditory" : "Text-Based",
-                playedAudio: "No" // Default to "No" for new artefact
+                playedAudio: previousPlayedAudio // Retain "Yes" if it was played before
             };
             // Assign the artefact-specific data
             let currentArtefactData = artefactData[artefact];
@@ -689,9 +690,9 @@
                     audio = new Audio(audioURL);
 
                     audio.onplay = () => {
-                        if (artefactData.playedAudio === "No") {
-                            artefactData.playedAudio = "Yes";
-                            console.log("✅ Audio started playing, updating playedAudio.");
+                        if (artefactData[currentArtefact]?.playedAudio === "No") {
+                            artefactData[currentArtefact].playedAudio = "Yes";
+                            console.log(`✅ Audio started playing for ${currentArtefact}, permanently setting playedAudio to 'Yes'.`);
                         }
                     };
 
@@ -804,9 +805,10 @@
                     console.log("✅ Audio started.");
                     playButton.innerText = "⏸ Pause Narration";
 
-                    if (artefactData.playedAudio === "No") {
-                        artefactData.playedAudio = "Yes";  // Mark the audio as played
-                        console.log("🔊 Audio played, updating artefactData:", artefactData);
+                    // Update the artefactData to ensure playedAudio remains "Yes"
+                    if (artefactData[currentArtefact].playedAudio === "No") {
+                        artefactData[currentArtefact].playedAudio = "Yes";
+                        console.log("🔊 Audio played, permanently setting playedAudio to 'Yes' for:", currentArtefact);
                     }
                 }).catch(error => {
                     console.warn("⚠️ Audio play blocked, user interaction required.", error);
