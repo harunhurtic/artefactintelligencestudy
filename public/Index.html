@@ -421,16 +421,28 @@
             // Initialize artefact data
             artefactStartTime = Date.now();
             currentArtefact = artefact;
-            artefactData = {
-                participantId: participantId,
-                artefact: artefact,
-                descriptionType: descriptionType,
-                profile: profile,
-                timeSpentSeconds: 0,
-                tellMeMoreClicked: 0,
-                deliveryMode: deliveryPreference === "Auditory" ? "Auditory" : "Text-Based",
-                playedAudio: "No" // Default to "No" for new artefact
-            };
+
+            // Retrieve stored state if available
+            if (!artefactData[artefact]) {
+                artefactData[artefact] = {
+                    participantId: participantId,
+                    artefact: artefact,
+                    descriptionType: descriptionType,
+                    profile: profile,
+                    timeSpentSeconds: 0,
+                    tellMeMoreClicked: 0,
+                    deliveryMode: deliveryPreference === "Auditory" ? "Auditory" : "Text-Based",
+                    playedAudio: "No"
+                };
+            }
+
+            // Maintain playedAudio state if already set to "Yes"
+            if (artefactData[artefact].playedAudio === "Yes") {
+                console.log(`🔊 Audio has already been played for ${artefact}`);
+            } else {
+                artefactData[artefact].playedAudio = "No"; // Default when first visiting
+            }
+
             // Assign the artefact-specific data
             let currentArtefactData = artefactData[artefact];
 
@@ -689,9 +701,8 @@
                     audio = new Audio(audioURL);
 
                     audio.onplay = () => {
-                        if (artefactData.playedAudio === "No") {
-                            artefactData.playedAudio = "Yes";
-                            console.log("✅ Audio started playing, updating playedAudio.");
+                        if (artefactData[currentArtefact].playedAudio === "No") {
+                            artefactData[currentArtefact].playedAudio = "Yes";
                         }
                     };
 
@@ -735,8 +746,8 @@
                     // Timeout fallback if audio doesn't load in 7 seconds
                     setTimeout(() => {
                         if (!hasAudioLoaded && !isMobileDevice()) {
-                            console.error("Audio failed to load within timeout.");
-                            showAudioError(playButton, "⚠️ The narrator couldn't narrate. Try again later.");
+                            console.error("⛔ Audio failed to load within timeout.");
+                            showAudioError(playButton, "⚠️ It may take longer than expected to load the Narrator.");
                         }
                     }, 7000);
                 })
