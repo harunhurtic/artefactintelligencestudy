@@ -421,20 +421,16 @@
             // Initialize artefact data
             artefactStartTime = Date.now();
             currentArtefact = artefact;
-
-            if (!artefactData[artefact]) {
-                artefactData[artefact] = {
-                    participantId: participantId,
-                    artefact: artefact,
-                    descriptionType: descriptionType,
-                    profile: profile,
-                    timeSpentSeconds: 0,
-                    tellMeMoreClicked: 0,
-                    deliveryMode: deliveryPreference === "Auditory" ? "Auditory" : "Text-Based",
-                    playedAudio: "No"
-                };
-            }
-
+            artefactData = {
+                participantId: participantId,
+                artefact: artefact,
+                descriptionType: descriptionType,
+                profile: profile,
+                timeSpentSeconds: 0,
+                tellMeMoreClicked: 0,
+                deliveryMode: deliveryPreference === "Auditory" ? "Auditory" : "Text-Based",
+                playedAudio: "No" // Default to "No" for new artefact
+            };
             // Assign the artefact-specific data
             let currentArtefactData = artefactData[artefact];
 
@@ -660,13 +656,6 @@
                 window.ttsAbortController.abort();
             }
 
-            // Ensure artefactData[currentArtefact] exists
-            if (!artefactData[currentArtefact]) {
-                artefactData[currentArtefact] = { playedAudio: "No" };
-            }
-            console.log(`🔍 Initial playedAudio state for ${currentArtefact}:`, artefactData[currentArtefact].playedAudio);
-
-
             // Create a new AbortController for this request
             window.ttsAbortController = new AbortController();
             const { signal } = window.ttsAbortController;
@@ -700,10 +689,9 @@
                     audio = new Audio(audioURL);
 
                     audio.onplay = () => {
-                        console.log(`🔊 Audio started for ${currentArtefact}.`);
-                        if (artefactData[currentArtefact].playedAudio !== "Yes") {
-                            artefactData[currentArtefact].playedAudio = "Yes";
-                            console.log(`playedAudio updated to "Yes" for ${currentArtefact}:`, artefactData);
+                        if (artefactData.playedAudio === "No") {
+                            artefactData.playedAudio = "Yes";
+                            console.log("✅ Audio started playing, updating playedAudio.");
                         }
                     };
 
@@ -816,11 +804,10 @@
                     console.log("✅ Audio started.");
                     playButton.innerText = "⏸ Pause Narration";
 
-                    if (artefactData[currentArtefact] && artefactData[currentArtefact].playedAudio !== "Yes") {
-                        artefactData[currentArtefact].playedAudio = "Yes";
-                        console.log(`✅ playedAudio updated to "Yes" for ${currentArtefact}:`, artefactData);
+                    if (artefactData.playedAudio === "No") {
+                        artefactData.playedAudio = "Yes";  // Mark the audio as played
+                        console.log("🔊 Audio played, updating artefactData:", artefactData);
                     }
-
                 }).catch(error => {
                     console.warn("⚠️ Audio play blocked, user interaction required.", error);
                 });
