@@ -421,16 +421,20 @@
             // Initialize artefact data
             artefactStartTime = Date.now();
             currentArtefact = artefact;
-            artefactData = {
-                participantId: participantId,
-                artefact: artefact,
-                descriptionType: descriptionType,
-                profile: profile,
-                timeSpentSeconds: 0,
-                tellMeMoreClicked: 0,
-                deliveryMode: deliveryPreference === "Auditory" ? "Auditory" : "Text-Based",
-                playedAudio: "No" // Default to "No" for new artefact
-            };
+
+            if (!artefactData[artefact]) {
+                artefactData[artefact] = {
+                    participantId: participantId,
+                    artefact: artefact,
+                    descriptionType: descriptionType,
+                    profile: profile,
+                    timeSpentSeconds: 0,
+                    tellMeMoreClicked: 0,
+                    deliveryMode: deliveryPreference === "Auditory" ? "Auditory" : "Text-Based",
+                    playedAudio: "No"
+                };
+            }
+
             // Assign the artefact-specific data
             let currentArtefactData = artefactData[artefact];
 
@@ -658,9 +662,7 @@
 
             // Ensure artefactData[currentArtefact] exists
             if (!artefactData[currentArtefact]) {
-                artefactData[currentArtefact] = {
-                    playedAudio: "No"
-                };
+                artefactData[currentArtefact] = { playedAudio: "No" };
             }
             console.log(`🔍 Initial playedAudio state for ${currentArtefact}:`, artefactData[currentArtefact].playedAudio);
 
@@ -701,7 +703,7 @@
                         console.log(`🔊 Audio started for ${currentArtefact}.`);
                         if (artefactData[currentArtefact].playedAudio !== "Yes") {
                             artefactData[currentArtefact].playedAudio = "Yes";
-                            console.log(`✅ playedAudio updated to "Yes" for ${currentArtefact}:`, artefactData);
+                            console.log(`playedAudio updated to "Yes" for ${currentArtefact}:`, artefactData);
                         }
                     };
 
