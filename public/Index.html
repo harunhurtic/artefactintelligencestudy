@@ -688,14 +688,6 @@
 
                     audio = new Audio(audioURL);
 
-                    audio.onplay = () => {
-                        if (artefactData[artefact] && artefactData[artefact].playedAudio === "Yes") {
-                            console.log(`🔊 Audio has already been played for ${artefact}`);
-                        } else if (artefactData[artefact]) {
-                            artefactData[artefact].playedAudio = "No"; // Default when first visiting
-                        }
-                    };
-
                     let hasAudioLoaded = false;
 
                     audio.addEventListener("loadeddata", () => {
@@ -805,8 +797,8 @@
                     console.log("✅ Audio started.");
                     playButton.innerText = "⏸ Pause Narration";
 
-                    if (artefactData.playedAudio === "No") {
-                        artefactData.playedAudio = "Yes";  // Mark the audio as played
+                    if (artefactData[currentArtefact] && artefactData[currentArtefact].playedAudio !== "Yes") {
+                        artefactData[currentArtefact].playedAudio = "Yes";
                         console.log("🔊 Audio played, updating artefactData:", artefactData);
                     }
                 }).catch(error => {
