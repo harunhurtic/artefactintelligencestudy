@@ -416,8 +416,19 @@
 
             const artefactDescription = artefactDescriptions[artefact][descriptionKey];
 
-            // Check if this artefact was played before and retain "Yes" state
-            let previousPlayedAudio = artefactData[artefact]?.playedAudio === "Yes" ? "Yes" : "No";
+            // Ensure artefactData object exists for the artefact
+            if (!artefactData[artefact]) {
+                artefactData[artefact] = {
+                    playedAudio: "No" // Default to "No"
+                };
+            }
+
+            // Keep playedAudio state if it was already set to "Yes"
+            if (artefactData[artefact].playedAudio === "Yes") {
+                console.log(`Retaining playedAudio = "Yes" for ${artefact}`);
+            } else {
+                artefactData[artefact].playedAudio = "No"; // Set default only if it's never been played
+            }
 
             // Initialize artefact data
             artefactStartTime = Date.now();
@@ -690,9 +701,9 @@
                     audio = new Audio(audioURL);
 
                     audio.onplay = () => {
-                        if (artefactData.playedAudio === "No") {
-                            artefactData.playedAudio = "Yes";
-                            console.log("✅ Audio started playing, updating playedAudio.");
+                        if (artefactData[currentArtefact]?.playedAudio === "No") {
+                            artefactData[currentArtefact].playedAudio = "Yes";
+                            console.log(`Audio played for ${currentArtefact}. playedAudio set to 'Yes' permanently.`);
                         }
                     };
 
