@@ -129,7 +129,11 @@ app.post("/log-artefact-data", async (req, res) => {
             thread.artefactInteractions[existingInteractionIndex].timeSpentSeconds += timeSpentSeconds;
             thread.artefactInteractions[existingInteractionIndex].tellMeMoreClicked += tellMeMoreClicked;
             thread.artefactInteractions[existingInteractionIndex].deliveryMode = deliveryMode;
-            thread.artefactInteractions[existingInteractionIndex].playedAudio = playedAudio;
+
+            if (playedAudio === "Yes") {
+                thread.artefactInteractions[existingInteractionIndex].playedAudio = "Yes";
+            }
+
             thread.artefactInteractions[existingInteractionIndex].timestamp = new Date();
         } else {
             // Add new artefact interaction with sanitized data
