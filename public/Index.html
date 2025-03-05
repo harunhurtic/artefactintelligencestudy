@@ -656,6 +656,15 @@
                 window.ttsAbortController.abort();
             }
 
+            // Ensure artefactData[currentArtefact] exists
+            if (!artefactData[currentArtefact]) {
+                artefactData[currentArtefact] = {
+                    playedAudio: "No"
+                };
+            }
+            console.log(`🔍 Initial playedAudio state for ${currentArtefact}:`, artefactData[currentArtefact].playedAudio);
+
+
             // Create a new AbortController for this request
             window.ttsAbortController = new AbortController();
             const { signal } = window.ttsAbortController;
@@ -689,14 +698,10 @@
                     audio = new Audio(audioURL);
 
                     audio.onplay = () => {
-                        if (!artefactData[currentArtefact]) {
-                            artefactData[currentArtefact] = { playedAudio: "No" };
-                        }
-
-                        // Ensure it updates only if not already "Yes"
+                        console.log(`🔊 Audio started for ${currentArtefact}.`);
                         if (artefactData[currentArtefact].playedAudio !== "Yes") {
                             artefactData[currentArtefact].playedAudio = "Yes";
-                            console.log(`🔊 Audio played, setting playedAudio to "Yes" for ${currentArtefact}:`, artefactData);
+                            console.log(`✅ playedAudio updated to "Yes" for ${currentArtefact}:`, artefactData);
                         }
                     };
 
@@ -811,8 +816,9 @@
 
                     if (artefactData[currentArtefact] && artefactData[currentArtefact].playedAudio !== "Yes") {
                         artefactData[currentArtefact].playedAudio = "Yes";
-                        console.log("🔊 Audio played, updating artefactData:", artefactData);
+                        console.log(`✅ playedAudio updated to "Yes" for ${currentArtefact}:`, artefactData);
                     }
+
                 }).catch(error => {
                     console.warn("⚠️ Audio play blocked, user interaction required.", error);
                 });
