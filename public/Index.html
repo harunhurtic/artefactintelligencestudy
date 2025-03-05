@@ -690,9 +690,9 @@
                     audio = new Audio(audioURL);
 
                     audio.onplay = () => {
-                        if (artefactData[currentArtefact]?.playedAudio === "No") {
-                            artefactData[currentArtefact].playedAudio = "Yes";
-                            console.log(`✅ Audio started playing for ${currentArtefact}, permanently setting playedAudio to 'Yes'.`);
+                        if (artefactData.playedAudio === "No") {
+                            artefactData.playedAudio = "Yes";
+                            console.log("✅ Audio started playing, updating playedAudio.");
                         }
                     };
 
