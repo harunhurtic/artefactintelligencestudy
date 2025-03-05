@@ -423,6 +423,8 @@
                 };
             }
 
+            let previousPlayedAudio = artefactData[artefact].playedAudio;
+
             // Keep playedAudio state if it was already set to "Yes"
             if (artefactData[artefact].playedAudio === "Yes") {
                 console.log(`Retaining playedAudio = "Yes" for ${artefact}`);
