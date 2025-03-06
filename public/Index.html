@@ -850,9 +850,13 @@
                     const endTime = Date.now();
                     artefactData.timeSpentSeconds = Math.floor((endTime - artefactStartTime) / 1000);
 
-                    navigator.sendBeacon("https://artefactintelligencestudy.hurtic.net/log-artefact-data", JSON.stringify(artefactData));
+                    console.log("📤 Sending artefact data before unload:", artefactData);
 
-                    console.log("✅ Artefact data sent before refresh:", artefactData);
+                    const success = navigator.sendBeacon("https://artefactintelligencestudy.hurtic.net/log-artefact-data",
+                        new Blob([JSON.stringify(artefactData)], { type: "application/json" })
+                    );
+
+                    console.log("✅ `sendBeacon()` success:", success);
                 }
             } catch (error) {
                 console.error("❌ Error sending artefact data before unload:", error);
@@ -861,6 +865,20 @@
             event.preventDefault();
             event.returnValue = "";
         });
+
+        document.addEventListener("visibilitychange", function () { // Fallback for Mobile Browsers
+            if (document.visibilityState === "hidden" && artefactStartTime && currentArtefact) {
+                const endTime = Date.now();
+                artefactData.timeSpentSeconds = Math.floor((endTime - artefactStartTime) / 1000);
+
+                console.log("📤 Sending artefact data on visibility change:", artefactData);
+
+                navigator.sendBeacon("https://artefactintelligencestudy.hurtic.net/log-artefact-data",
+                    new Blob([JSON.stringify(artefactData)], { type: "application/json" })
+                );
+            }
+        });
+
 
 
         /* Developed by Harun Hurtic as part of his Master's Thesis at the Norwegian University of Science and Technology (NTNU) */
