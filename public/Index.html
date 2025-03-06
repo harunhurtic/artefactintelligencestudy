@@ -844,6 +844,25 @@
 
         window.onload = renderParticipantScreen;
 
+        window.addEventListener("beforeunload", function (event) { // Function to prevent participant accidental refreshes & to send data to server if page is refreshed anyways.
+            try {
+                if (artefactStartTime && currentArtefact) {
+                    const endTime = Date.now();
+                    artefactData.timeSpentSeconds = Math.floor((endTime - artefactStartTime) / 1000);
+
+                    navigator.sendBeacon("https://artefactintelligencestudy.hurtic.net/log-artefact-data", JSON.stringify(artefactData));
+
+                    console.log("✅ Artefact data sent before refresh:", artefactData);
+                }
+            } catch (error) {
+                console.error("❌ Error sending artefact data before unload:", error);
+            }
+
+            event.preventDefault();
+            event.returnValue = "";
+        });
+
+
         /* Developed by Harun Hurtic as part of his Master's Thesis at the Norwegian University of Science and Technology (NTNU) */
 
     </script>
