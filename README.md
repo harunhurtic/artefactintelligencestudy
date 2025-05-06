@@ -6,5 +6,6 @@ This application was developed for and used during the on-site evaluation of the
 Read the Thesis Here: (Link to be added in the future).
 
 🌐 For collaboration, feedback, or inquiries:
+
 https://www.hurtic.net
 
